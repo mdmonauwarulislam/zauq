@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
-import Signup from "./views/auth/signup";
+import Signup from "./views/auth/Signup";
 import Login from "./Views/Auth/Login";
 
 import DashboardLayout from "./layout/dashboardLayout";
