@@ -8,6 +8,11 @@ import {
   TextAlignStart,
   User,
   ChevronDown,
+  DeleteIcon,
+  PlusIcon,
+  MinusIcon,
+  Delete,
+  Trash2,
 } from "lucide-react";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
@@ -303,7 +308,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
           isOpen ? "translate-x-0" : "translate-x-full"
         } flex flex-col`}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-4 border-b-3 border-brand-primary">
           <h2 className="text-sm font-semibold tracking-wide text-gray-800 uppercase">
             Cart ({cartItems.length})
           </h2>
@@ -324,7 +329,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 <div 
                   key={item.product._id} 
                   onClick={() => handleProductClick(item.product._id)}
-                  className="flex items-center space-x-3 border-b pb-4 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg p-2"
+                  className="flex items-center gap-3 border-b-2 border-brand-primary pb-4 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg p-2"
                 >
                   <img
                     src={item.product.images?.[0] || "/placeholder.jpg"}
@@ -334,19 +339,19 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-gray-900">{item.product.name}</h3>
                     <p className="text-sm text-gray-600">₹{item.price}</p>
-                    <div className="flex items-center space-x-2 mt-2">
+                    <div className="flex items-center gap-4 mt-2">
                       <button
                         onClick={(e) => handleUpdateQuantity(item.product._id, item.quantity - 1, e)}
-                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs hover:bg-gray-300"
+                        className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-md hover:bg-gray-300"
                       >
-                        -
+                        <MinusIcon/>
                       </button>
                       <span className="text-sm">{item.quantity}</span>
                       <button
                         onClick={(e) => handleUpdateQuantity(item.product._id, item.quantity + 1, e)}
-                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs hover:bg-gray-300"
+                        className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-md hover:bg-gray-300"
                       >
-                        +
+                        <PlusIcon/>
                       </button>
                     </div>
                   </div>
@@ -354,7 +359,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                     onClick={(e) => handleRemoveFromCart(item.product._id, e)}
                     className="text-red-500 hover:text-red-700"
                   >
-                    <X className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -372,7 +377,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 navigate('/checkout');
                 onClose();
               }}
-              className="w-full rounded-full bg-black text-white hover:bg-gray-900 text-sm font-semibold py-2.5"
+              className="w-full rounded-full bg-brand-primary text-brand-text-primary hover:bg-brand-primary-dark text-sm font-semibold py-2.5"
             >
               Go to Checkout
             </Button>
@@ -416,7 +421,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
           isOpen ? "translate-x-0" : "translate-x-full"
         } flex flex-col`}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-4 border-b-3 border-brand-primary">
           <h2 className="text-sm font-semibold tracking-wide text-gray-800 uppercase">
             Wishlist ({wishlistItems.length})
           </h2>
@@ -437,7 +442,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                 <div 
                   key={item.product._id} 
                   onClick={() => handleProductClick(item.product._id)}
-                  className="flex items-center space-x-3 border-b pb-4 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg p-2"
+                  className="flex items-center gap-3 border-b-2 border-brand-primary pb-4 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg p-2"
                 >
                   <img
                     src={item.product.images?.[0] || "/placeholder.jpg"}
@@ -452,7 +457,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                     onClick={(e) => handleRemoveFromWishlist(item.product._id, e)}
                     className="text-red-500 hover:text-red-700"
                   >
-                    <X className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
