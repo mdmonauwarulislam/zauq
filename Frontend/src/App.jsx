@@ -5,8 +5,8 @@ import { useDispatch, useSelector } from "react-redux";
 import Signup from "./Views/Auth/Signup";
 import Login from "./Views/Auth/Login";
 
-import DashboardLayout from "./layout/dashboardLayout";
-import MainLayout from "./layout/mainLayout";
+import DashboardLayout from "./layout/DashboardLayout";
+import MainLayout from "./layout/MainLayout";
 import NotFoundPage from "./Views/404/index";
 
 import { Toaster } from "react-hot-toast";
