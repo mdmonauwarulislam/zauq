@@ -9,7 +9,7 @@ import { RESPONSE_MESSAGES } from "../utils/constant.js";
  * @access  Private
  */
 export const getCart = asyncHandler(async (req, res) => {
-  const cart = await Cart.findOne({ user: req.user._id }).populate({
+  const cart = await Cart.findOne({ user: req.user.id }).populate({
     path: "items.product",
     select: "name slug images price discountedPrice stock",
   });
@@ -50,10 +50,10 @@ export const addToCart = asyncHandler(async (req, res) => {
     throw new ErrorHandler("Insufficient stock", 400);
   }
 
-  let cart = await Cart.findOne({ user: req.user._id });
+  let cart = await Cart.findOne({ user: req.user.id });
 
   if (!cart) {
-    cart = new Cart({ user: req.user._id, items: [] });
+    cart = new Cart({ user: req.user.id, items: [] });
   }
 
   // Check if product already in cart
@@ -101,7 +101,7 @@ export const updateCartItem = asyncHandler(async (req, res) => {
     throw new ErrorHandler("Valid quantity is required", 400);
   }
 
-  const cart = await Cart.findOne({ user: req.user._id });
+  const cart = await Cart.findOne({ user: req.user.id });
 
   if (!cart) {
     throw new ErrorHandler("Cart not found", 404);
@@ -143,7 +143,7 @@ export const updateCartItem = asyncHandler(async (req, res) => {
 export const removeFromCart = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
-  const cart = await Cart.findOne({ user: req.user._id });
+  const cart = await Cart.findOne({ user: req.user.id });
 
   if (!cart) {
     throw new ErrorHandler("Cart not found", 404);
@@ -173,7 +173,7 @@ export const removeFromCart = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const clearCart = asyncHandler(async (req, res) => {
-  const cart = await Cart.findOneAndDelete({ user: req.user._id });
+  const cart = await Cart.findOneAndDelete({ user: req.user.id });
 
   return res.status(200).json({
     success: true,

@@ -60,3 +60,35 @@ export const getCloudinarySignature = asyncHandler(async (req, res) => {
     apiKey: process.env.CLOUDINARY_API_KEY,
   });
 });
+
+/**
+ * @desc    Upload image to Cloudinary (profile images, etc)
+ * @route   POST /api/cloudinary/upload
+ * @access  Private
+ */
+export const uploadImageToCloudinary = asyncHandler(async (req, res) => {
+  const { image, folder = "profile_images" } = req.body;
+
+  if (!image) {
+    throw new ErrorHandler("Image data is required", 400);
+  }
+
+  // Upload to Cloudinary
+  const result = await cloud.uploader.upload(image, {
+    folder: folder,
+    resource_type: "auto",
+    transformation: [
+      { width: 500, height: 500, crop: "limit" },
+      { quality: "auto" },
+      { fetch_format: "auto" }
+    ]
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Image uploaded successfully",
+    url: result.secure_url,
+    publicId: result.public_id,
+  });
+});
+

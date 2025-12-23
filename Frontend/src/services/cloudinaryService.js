@@ -17,66 +17,46 @@ const deleteImage = async (publicId) =>
     secure: true,
   });
 
-// Upload file to Cloudinary using signature returned from backend
+// Upload image through backend
 const uploadImage = async (file) => {
   if (!file) throw new Error("No file provided");
 
-  // get signature and upload preset/cloud name from backend
-  const sigResp = await getSignature();
-  const { timestamp, signature, uploadPreset, cloudName, apiKey } = sigResp?.data || {};
-
-  if (!cloudName || !signature) {
-    throw new Error("Cloudinary is not configured on the server");
-  }
-
-  const form = new FormData();
-  form.append("file", file);
-  form.append("api_key", apiKey);
-  form.append("timestamp", timestamp);
-  form.append("signature", signature);
-
-  // Try with upload preset first, fallback to unsigned upload if preset fails
-  let url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-
-  try {
-    // First try with upload preset
-    if (uploadPreset) {
-      form.append("upload_preset", uploadPreset);
-    }
-
-    const resp = await fetch(url, {
-      method: "POST",
-      body: form,
-    });
-
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      // If preset doesn't exist, try without preset (requires unsigned upload)
-      if (errorText.includes("Upload preset") && errorText.includes("not found")) {
-        // Remove preset and try again with basic upload
-        form.delete("upload_preset");
-        const retryResp = await fetch(url, {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onloadend = async () => {
+      try {
+        const base64Image = reader.result;
+        
+        const response = await Request({
+          url: apiUrls.cloudinary.upload,
           method: "POST",
-          body: form,
+          data: { 
+            image: base64Image,
+            folder: "profile_images"
+          },
+          secure: true,
         });
 
-        if (!retryResp.ok) {
-          const retryText = await retryResp.text();
-          throw new Error(`Cloudinary upload failed: ${retryText}`);
+        if (response?.data?.url) {
+          resolve({
+            secure_url: response.data.url,
+            public_id: response.data.publicId,
+          });
+        } else {
+          reject(new Error("Upload failed"));
         }
-
-        const retryData = await retryResp.json();
-        return retryData;
-      } else {
-        throw new Error(`Cloudinary upload failed: ${errorText}`);
+      } catch (error) {
+        reject(error);
       }
-    }
+    };
 
-    const data = await resp.json();
-    return data; // contains secure_url, public_id, etc.
-  } catch (err) {
-    throw new Error(`Cloudinary upload failed: ${err.message}`);
-  }
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+
+    reader.readAsDataURL(file);
+  });
 };
 
 const CloudinaryService = {

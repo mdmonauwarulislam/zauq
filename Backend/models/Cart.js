@@ -50,12 +50,11 @@ const cartSchema = new Schema(
 cartSchema.index({ user: 1 });
 
 // Calculate total amount before saving
-cartSchema.pre("save", function (next) {
+cartSchema.pre("save", function () {
   this.totalAmount = this.items.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
-  next();
 });
 
 const Cart = model("Cart", cartSchema);

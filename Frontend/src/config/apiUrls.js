@@ -81,8 +81,26 @@ const apiUrls = {
 
   // Cloudinary
   cloudinary: {
+    upload: "cloudinary/upload",
     deleteImage: "cloudinary/delete",
     signature: "cloudinary/signature",
+  },
+
+  // Cart
+  cart: {
+    list: "cart",
+    add: "cart",
+    update: (productId) => `cart/${productId}`,
+    remove: (productId) => `cart/${productId}`,
+    clear: "cart",
+  },
+
+  // Wishlist
+  wishlist: {
+    list: "wishlist",
+    add: "wishlist",
+    remove: (productId) => `wishlist/${productId}`,
+    clear: "wishlist",
   },
 };
 

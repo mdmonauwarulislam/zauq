@@ -5,6 +5,7 @@ import Dashboard from "../Views/Dashboard/Dashboard";
 import Categories from "../Views/Dashboard/Categories";
 import Products from "../Views/Dashboard/Products";
 import HeroConfig from "../Views/Dashboard/HeroConfig";
+import NavbarConfig from "../Views/Dashboard/NavbarConfig";
 import Coupons from "../Views/Dashboard/Coupons";
 import Orders from "../Views/Dashboard/Orders";
 import Users from "../Views/Dashboard/Users";
@@ -21,6 +22,7 @@ const DashboardLayout = () => {
           <Route path="/categories" element={<Categories />} />
           <Route path="/products" element={<Products />} />
           <Route path="/hero" element={<HeroConfig />} />
+          <Route path="/navbar" element={<NavbarConfig />} />
           <Route path="/coupons" element={<Coupons />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/users" element={<Users />} />

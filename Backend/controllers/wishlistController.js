@@ -8,7 +8,7 @@ import { RESPONSE_MESSAGES } from "../utils/constant.js";
  * @access  Private
  */
 export const getWishlist = asyncHandler(async (req, res) => {
-  const wishlist = await Wishlist.findOne({ user: req.user._id }).populate({
+  const wishlist = await Wishlist.findOne({ user: req.user.id }).populate({
     path: "items.product",
     select: "name slug images price discountedPrice stock",
   });
@@ -40,10 +40,10 @@ export const addToWishlist = asyncHandler(async (req, res) => {
     throw new ErrorHandler("Product ID is required", 400);
   }
 
-  let wishlist = await Wishlist.findOne({ user: req.user._id });
+  let wishlist = await Wishlist.findOne({ user: req.user.id });
 
   if (!wishlist) {
-    wishlist = new Wishlist({ user: req.user._id, items: [] });
+    wishlist = new Wishlist({ user: req.user.id, items: [] });
   }
 
   // Check if product already in wishlist
@@ -78,7 +78,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
 export const removeFromWishlist = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
-  const wishlist = await Wishlist.findOne({ user: req.user._id });
+  const wishlist = await Wishlist.findOne({ user: req.user.id });
 
   if (!wishlist) {
     throw new ErrorHandler("Wishlist not found", 404);
@@ -108,7 +108,7 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const clearWishlist = asyncHandler(async (req, res) => {
-  const wishlist = await Wishlist.findOneAndDelete({ user: req.user._id });
+  const wishlist = await Wishlist.findOneAndDelete({ user: req.user.id });
 
   return res.status(200).json({
     success: true,

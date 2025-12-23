@@ -9,14 +9,14 @@ import {
 } from "lucide-react";
 
 const Footer = () => {
-  // Define the primary color utility class for consistency (Changed from red to purple)
-  const PRIMARY_COLOR = "text-purple-600";
-  const HOVER_BG = "hover:bg-purple-600";
+  // Define the primary color utility class for consistency
+  const PRIMARY_COLOR = "text-brand-primary";
+  const HOVER_BG = "hover:bg-brand-primary";
 
   return (
     // Changed bg-gray-900 to bg-gray-800 for a slightly softer dark shade
-    <footer className="relative bg-white mt-16 overflow-hidden border-t border-purple-700">
-      <div className="max-w-7xl mx-auto px-4">
+    <footer className="relative bg-brand-secondary-light overflow-hidden border-t border-brand-primary">
+      <div className="w-full px-4 md:px-8 lg:px-16">
         {/* Main Footer Content */}
         <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           
@@ -49,7 +49,7 @@ const Footer = () => {
 
           {/* Links Section */}
           <div>
-            <h4 className={`text-lg font-bold uppercase mb-6 ${PRIMARY_COLOR} border-b-2 border-purple-600 pb-2 inline-block`}>
+            <h4 className={`text-lg font-bold uppercase mb-6 ${PRIMARY_COLOR} border-b-2 border-brand-primary pb-2 inline-block`}>
               Quick Links
             </h4>
             <ul className="space-y-3">
@@ -73,7 +73,7 @@ const Footer = () => {
 
           {/* Address & Social Section */}
           <div>
-            <h4 className={`text-lg font-bold uppercase mb-6 ${PRIMARY_COLOR} border-b-2 border-purple-600 pb-2 inline-block`}>
+            <h4 className={`text-lg font-bold uppercase mb-6 ${PRIMARY_COLOR} border-b-2 border-brand-primary pb-2 inline-block`}>
               Contact & Address
             </h4>
 
@@ -98,21 +98,21 @@ const Footer = () => {
               <div className="flex space-x-4">
                 <a
                   href="#"
-                  className={`bg-gray-900 ${HOVER_BG} p-3 rounded-full transition-all duration-300 transform hover:scale-110 border border-gray-700 hover:border-purple-600`}
+                  className={`bg-gray-900 ${HOVER_BG} p-3 rounded-full transition-all duration-300 transform hover:scale-110 border border-gray-700 hover:border-brand-primary`}
                   aria-label="Facebook"
                 >
                   <Facebook className="w-5 h-5 text-white" />
                 </a>
                 <a
                   href="#"
-                  className={`bg-gray-900 ${HOVER_BG} p-3 rounded-full transition-all duration-300 transform hover:scale-110 border border-gray-700 hover:border-purple-600`}
+                  className={`bg-gray-900 ${HOVER_BG} p-3 rounded-full transition-all duration-300 transform hover:scale-110 border border-gray-700 hover:border-brand-primary`}
                   aria-label="Instagram"
                 >
                   <Instagram className="w-5 h-5 text-white" />
                 </a>
                 <a
                   href="#"
-                  className={`bg-gray-900 ${HOVER_BG} p-3 rounded-full transition-all duration-300 transform hover:scale-110 border border-gray-700 hover:border-purple-600`}
+                  className={`bg-gray-900 ${HOVER_BG} p-3 rounded-full transition-all duration-300 transform hover:scale-110 border border-gray-700 hover:border-brand-primary`}
                   aria-label="LinkedIn"
                 >
                   <Linkedin className="w-5 h-5 text-white" />
@@ -123,13 +123,13 @@ const Footer = () => {
         </div>
 
         {/* Bottom Footer */}
-        <div className="border-t border-purple-700 py-6">
+        <div className="border-t border-brand-primary py-6">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <p className="text-gray-400 text-sm">
               Copyright ©2025 Shop | Powered by zauq.com.
             </p>
             <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 bg-purple-600 rounded-full animate-pulse`}></div>
+              <div className={`w-2 h-2 bg-brand-primary rounded-full animate-pulse`}></div>
               <span className="text-sm text-gray-400">Trusted & Secure</span>
             </div>
           </div>

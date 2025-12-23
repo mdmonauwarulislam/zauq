@@ -23,8 +23,8 @@ const FeaturedCard = memo(({ collection }) => {
   };
 
   return (
-    <div className="block w-full cursor-pointer" onClick={handleNavigate}>
-      <div className="group relative w-full overflow-hidden rounded-2xl shadow-md bg-white mx-auto h-[50vh] hover:shadow-lg transition-shadow duration-300">
+    <div className="block w-full h-full cursor-pointer" onClick={handleNavigate}>
+      <div className="group relative w-full h-full overflow-hidden rounded-2xl shadow-md bg-white mx-auto hover:shadow-lg transition-shadow duration-300">
         {/* Image */}
         <img
           src={image}

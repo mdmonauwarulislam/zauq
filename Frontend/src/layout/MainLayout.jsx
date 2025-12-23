@@ -4,6 +4,10 @@ import UserProfile from "@/Views/account/UserProfile";
 import Deals from "@/Views/deals/Deals";
 import Home from "@/views/home/home";
 import Product from "@/views/product/product";
+import ProductDetails from "@/Views/Product/ProductDetails";
+import Categories from "@/Views/Category/Categories";
+import Category from "@/Views/Category/Category";
+import Checkout from "@/Views/Checkout/Checkout";
 import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -21,10 +25,13 @@ const MainLayout = () => {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/collections" element={<Categories />} />
+        <Route path="/category/:categoryId" element={<Category />} />
         <Route path="/products" element={<Product />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
         <Route path="/profile" element={<UserProfile/>} />
         <Route path="/deals" element={<Deals/>} />
-
+        <Route path="/checkout" element={<Checkout/>} />
       </Routes>
       <Footer />
     </>

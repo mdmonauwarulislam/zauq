@@ -143,13 +143,14 @@ export const updateProfile = asyncHandler(async (req, res) => {
     throw new ErrorHandler(RESPONSE_MESSAGES.UNAUTHORIZED, 401);
   }
 
-  const { firstName, lastName, email, profileImage } = req.body;
+  const { firstName, lastName, email, profileImage, addresses } = req.body;
 
   const updateData = {};
 
   if (firstName) updateData.firstName = firstName;
   if (lastName) updateData.lastName = lastName;
   if (profileImage) updateData.profileImage = profileImage;
+  if (addresses !== undefined) updateData.addresses = addresses;
 
   if (email) {
     if (!validateEmail(email)) {

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import MarqueeBar from "./MarqueeBar";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/redux/slices/authSlice";
-import { selectNavbarItems, selectMarqueeMessages, selectSaleBanner } from "@/redux/slices/homepageSlice";
+import { selectNavbarItems, selectMarqueeMessages, selectSaleBanner, fetchHomepageConfig } from "@/redux/slices/homepageSlice";
 import { fetchWishlist, removeFromWishlist } from "@/redux/slices/wishlistSlice";
 import { fetchCart, removeFromCart, updateCartItem } from "@/redux/slices/cartSlice";
 import HomepageService from "@/services/homepageService";
@@ -23,19 +23,15 @@ import HomepageService from "@/services/homepageService";
 // navItems now come from Redux via selectNavbarItems
 
 // Default messages in case backend is empty
-const DEFAULT_MARQUEE_MESSAGES = [
-  "⚡ FREE SHIPPING ON ALL ORDERS OVER ₹2000",
-  "🎁 GET A FREE GIFT WITH YOUR FIRST PURCHASE",
-  "⭐ RATED 5 STARS BY THOUSANDS OF CUSTOMERS",
-  "💳 EASY 30-DAY RETURNS & EXCHANGES",
+const DEFAULT_MARQUEE_MESSAGES = [""
 ];
 
 const TimerSegment = ({ value, label }) => (
-  <div className="flex flex-col items-center justify-center w-10 h-10 lg:w-14 lg:h-14 bg-white shadow-sm rounded-full">
-    <span className="text-xs lg:text-lg font-extrabold text-black leading-none">
+  <div className="flex flex-col items-center justify-center w-8 h-8 sm:w-10 sm:h-10 lg:w-14 lg:h-14 bg-white shadow-sm rounded-full">
+    <span className="text-[10px] sm:text-xs lg:text-lg font-extrabold text-black leading-none">
       {value}
     </span>
-    <span className="text-[9px] lg:text-[10px] font-medium text-gray-700 uppercase leading-none">
+    <span className="text-[7px] sm:text-[9px] lg:text-[10px] font-medium text-gray-700 uppercase leading-none mt-0.5">
       {label}
     </span>
   </div>
@@ -163,7 +159,7 @@ const UserMenuDesktop = ({ user, onLogout }) => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-44 bg-white shadow-lg rounded-lg border border-gray-100 py-2 z-[9999]">
+        <div className="absolute right-0 mt-2 w-44 bg-white shadow-lg rounded-lg border border-gray-100 py-2 z-9999">
           <button
             className="w-full text-left px-3 py-2 text-xs text-gray-800 hover:bg-gray-100"
             onClick={() => {
@@ -233,7 +229,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
               autoFocus
               style={{ background: "transparent" }}
             />
-            <button className="h-14 w-14 cursor-pointer bg-black text-white hover:bg-gray-700 transition-colors duration-200 flex items-center justify-center rounded-full">
+            <button className="h-14 w-14 cursor-pointer bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors duration-200 flex items-center justify-center rounded-full">
               <Search className="w-6 h-6" />
             </button>
           </div>
@@ -269,18 +265,26 @@ const SearchOverlay = ({ isOpen, onClose }) => {
 const CartDrawer = ({ isOpen, onClose }) => {
   const drawerRef = useRef(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { items: cartItems, totalAmount } = useSelector((state) => state.cart);
 
-  const handleRemoveFromCart = (productId) => {
+  const handleRemoveFromCart = (productId, e) => {
+    e.stopPropagation();
     dispatch(removeFromCart(productId));
   };
 
-  const handleUpdateQuantity = (productId, quantity) => {
+  const handleUpdateQuantity = (productId, quantity, e) => {
+    e.stopPropagation();
     if (quantity > 0) {
       dispatch(updateCartItem({ productId, quantity }));
     } else {
       dispatch(removeFromCart(productId));
     }
+  };
+
+  const handleProductClick = (productId) => {
+    navigate(`/products/${productId}`);
+    onClose();
   };
 
   return (
@@ -317,7 +321,11 @@ const CartDrawer = ({ isOpen, onClose }) => {
           ) : (
             <div className="space-y-4">
               {cartItems.map((item) => (
-                <div key={item.product._id} className="flex items-center space-x-3 border-b pb-4">
+                <div 
+                  key={item.product._id} 
+                  onClick={() => handleProductClick(item.product._id)}
+                  className="flex items-center space-x-3 border-b pb-4 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg p-2"
+                >
                   <img
                     src={item.product.images?.[0] || "/placeholder.jpg"}
                     alt={item.product.name}
@@ -328,22 +336,22 @@ const CartDrawer = ({ isOpen, onClose }) => {
                     <p className="text-sm text-gray-600">₹{item.price}</p>
                     <div className="flex items-center space-x-2 mt-2">
                       <button
-                        onClick={() => handleUpdateQuantity(item.product._id, item.quantity - 1)}
-                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs"
+                        onClick={(e) => handleUpdateQuantity(item.product._id, item.quantity - 1, e)}
+                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs hover:bg-gray-300"
                       >
                         -
                       </button>
                       <span className="text-sm">{item.quantity}</span>
                       <button
-                        onClick={() => handleUpdateQuantity(item.product._id, item.quantity + 1)}
-                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs"
+                        onClick={(e) => handleUpdateQuantity(item.product._id, item.quantity + 1, e)}
+                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs hover:bg-gray-300"
                       >
                         +
                       </button>
                     </div>
                   </div>
                   <button
-                    onClick={() => handleRemoveFromCart(item.product._id)}
+                    onClick={(e) => handleRemoveFromCart(item.product._id, e)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <X className="w-4 h-4" />
@@ -359,7 +367,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total: ₹{totalAmount}</span>
             </div>
-            <Button className="w-full rounded-full bg-black text-white hover:bg-gray-900 text-sm font-semibold py-2.5">
+            <Button 
+              onClick={() => {
+                navigate('/checkout');
+                onClose();
+              }}
+              className="w-full rounded-full bg-black text-white hover:bg-gray-900 text-sm font-semibold py-2.5"
+            >
               Go to Checkout
             </Button>
           </div>
@@ -373,15 +387,22 @@ const CartDrawer = ({ isOpen, onClose }) => {
 const WishlistDrawer = ({ isOpen, onClose }) => {
   const drawerRef = useRef(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
-  const handleRemoveFromWishlist = (productId) => {
+  const handleRemoveFromWishlist = (productId, e) => {
+    e.stopPropagation();
     dispatch(removeFromWishlist(productId));
+  };
+
+  const handleProductClick = (productId) => {
+    navigate(`/products/${productId}`);
+    onClose();
   };
 
   return (
     <div
-      className={`fixed inset-0 z-[9997] transition-opacity duration-300 ${
+      className={`fixed inset-0 z-9997 transition-opacity duration-300 ${
         isOpen ? "visible opacity-100" : "invisible opacity-0"
       }`}
       onClick={(e) => {
@@ -413,7 +434,11 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
           ) : (
             <div className="space-y-4">
               {wishlistItems.map((item) => (
-                <div key={item.product._id} className="flex items-center space-x-3 border-b pb-4">
+                <div 
+                  key={item.product._id} 
+                  onClick={() => handleProductClick(item.product._id)}
+                  className="flex items-center space-x-3 border-b pb-4 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg p-2"
+                >
                   <img
                     src={item.product.images?.[0] || "/placeholder.jpg"}
                     alt={item.product.name}
@@ -424,7 +449,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                     <p className="text-sm text-gray-600">₹{item.product.discountedPrice || item.product.price}</p>
                   </div>
                   <button
-                    onClick={() => handleRemoveFromWishlist(item.product._id)}
+                    onClick={(e) => handleRemoveFromWishlist(item.product._id, e)}
                     className="text-red-500 hover:text-red-700"
                   >
                     <X className="w-4 h-4" />
@@ -449,7 +474,7 @@ const MobileMenu = ({
   onLogout,
 }) => (
   <div
-    className={`fixed inset-0 z-[100] transition-transform duration-300 ease-in-out lg:hidden ${
+    className={`fixed inset-0 z-100 transition-transform duration-300 ease-in-out lg:hidden ${
       isOpen ? "translate-x-0" : "-translate-x-full"
     }`}
   >
@@ -476,13 +501,19 @@ const MobileMenu = ({
             key={item.name}
             to={item.href || "#"}
             onClick={onClose}
-            className={`block px-4 py-3 text-base font-semibold uppercase transition-all duration-300 rounded-lg ${
+            className={`block px-4 py-3 text-base font-semibold uppercase transition-all duration-300 rounded-lg relative overflow-hidden group ${
               isActivePath(item.href)
-                ? "text-purple-600 bg-purple-50"
-                : "text-gray-900 hover:text-purple-600 hover:bg-gray-50"
+                ? "text-brand-primary bg-purple-50"
+                : "text-gray-900 hover:bg-gray-50"
             }`}
           >
             {item.name}
+            {/* Active underline */}
+            {isActivePath(item.href) && (
+              <span className="absolute bottom-2 left-4 right-4 h-0.5 bg-brand-primary"></span>
+            )}
+            {/* Hover underline from left */}
+            <span className="absolute bottom-2 left-4 right-4 h-0.5 bg-brand-primary scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
           </Link>
         ))}
       </div>
@@ -550,11 +581,6 @@ const Navbar = () => {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
   // 🔗 backend-driven UI
-  const [navbarCouponText, setNavbarCouponText] = useState("");
-  const [marqueeMessages, setMarqueeMessages] = useState(
-    DEFAULT_MARQUEE_MESSAGES
-  );
-  const [saleBanner, setSaleBanner] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
 
   const location = useLocation();
@@ -564,8 +590,8 @@ const Navbar = () => {
 
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const navItems = useSelector(selectNavbarItems);
-  const reduxMarqueeMessages = useSelector(selectMarqueeMessages);
-  const reduxSaleBanner = useSelector(selectSaleBanner);
+  const marqueeMessages = useSelector(selectMarqueeMessages);
+  const saleBanner = useSelector(selectSaleBanner);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const { items: cartItems } = useSelector((state) => state.cart);
 
@@ -611,7 +637,8 @@ const Navbar = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/login");
+    toast.success("Logged out successfully");
+    navigate("/");
   };
 
   // Fetch wishlist and cart when authenticated
@@ -621,6 +648,11 @@ const Navbar = () => {
       dispatch(fetchCart());
     }
   }, [isAuthenticated, dispatch]);
+
+  // Fetch homepage configuration on component mount
+  useEffect(() => {
+    dispatch(fetchHomepageConfig());
+  }, [dispatch]);
 
   // 🕒 Discount timer logic based on saleBanner.endDate
   useEffect(() => {
@@ -694,13 +726,6 @@ const Navbar = () => {
         onClose={() => setIsWishlistOpen(false)}
       />
 
-      {/* 🔹 Top coupon bar from backend (navbarCouponText) */}
-      {navbarCouponText && (
-        <div className="w-full bg-black text-white text-xs sm:text-sm text-center py-2 px-3">
-          {navbarCouponText}
-        </div>
-      )}
-
       {/* Main Navbar */}
       <nav className="relative bg-white shadow-md">
         <div className="items-center sm:px-8 px-4 lg:px-10">
@@ -709,13 +734,13 @@ const Navbar = () => {
             <div className="flex items-center gap-1 lg:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 text-gray-700 hover:text-purple-600 rounded-lg transition-colors"
+                className="p-2 text-gray-700 hover:text-brand-primary rounded-lg transition-colors"
               >
                 <TextAlignStart className="w-6 h-6" />
               </button>
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 flex items-center justify-center rounded-lg text-gray-700 hover:text-purple-600 transition-colors"
+                className="p-2 flex items-center justify-center rounded-lg text-gray-700 hover:text-brand-primary transition-colors"
               >
                 <Search className="w-6 h-6" />
               </button>
@@ -726,7 +751,7 @@ const Navbar = () => {
               to="/"
               className="flex items-center absolute left-2/5 transform lg:relative lg:left-auto lg:transform-none"
             >
-              <span className="text-3xl font-extrabold tracking-tight text-purple-950">
+              <span className="text-3xl font-extrabold tracking-tight text-brand-primary">
                 ZAUQ
               </span>
             </Link>
@@ -737,7 +762,7 @@ const Navbar = () => {
               ref={dropdownRef}
             >
               {navItems.map((item) => (
-                <div key={item.name} className="relative">
+                <div key={item.name} className="relative group">
                   <div className="relative">
                     <button
                       onClick={
@@ -745,16 +770,24 @@ const Navbar = () => {
                           ? () => handleDropdownToggle(item.name)
                           : undefined
                       }
-                      className={`flex items-center space-x-1 py-1 text-sm font-medium uppercase transition-colors duration-200 focus:outline-none ${
+                      className={`flex items-center space-x-1 py-1 text-md font-medium uppercase transition-colors duration-200 focus:outline-none ${
                         activeDropdown === item.name || isActivePath(item.href)
-                          ? "text-purple-600 "
-                          : "text-gray-900 hover:text-purple-600"
+                          ? "text-brand-primary"
+                          : "text-gray-800 hover:text-brand-primary"
                       }`}
                     >
                       <Link to={item.href || "#"} className="block">
                         {item.name}
                       </Link>
                     </button>
+                    {/* Active underline */}
+                    {isActivePath(item.href) && (
+                      <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-brand-primary"></span>
+                    )}
+                    {/* Hover underline from left */}
+                    {!isActivePath(item.href) && (
+                      <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-brand-primary scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -765,7 +798,7 @@ const Navbar = () => {
               {/* Desktop Search */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="hidden lg:flex p-4 items-center justify-center rounded-full shadow-lg hover:bg-black hover:text-white cursor-pointer transition-colors duration-200"
+                className="hidden lg:flex p-4 items-center justify-center rounded-full shadow-lg hover:bg-brand-primary hover:text-white cursor-pointer transition-colors duration-200"
               >
                 <Search className="w-6 h-6" />
               </button>
@@ -773,7 +806,7 @@ const Navbar = () => {
               {/* ❤️ Wishlist Icon (now also visible on mobile) */}
               <button
                 onClick={() => setIsWishlistOpen(true)}
-                className="relative p-2 sm:p-4 h-10 w-10 sm:h-14 sm:w-14 flex items-center rounded-full shadow-lg hover:bg-black hover:text-white justify-center text-gray-700 transition-colors duration-200 cursor-pointer"
+                className="relative p-2 sm:p-4 h-10 w-10 sm:h-14 sm:w-14 flex items-center rounded-full shadow-lg hover:bg-brand-primary hover:text-white justify-center text-gray-700 transition-colors duration-200 cursor-pointer"
               >
                 <Star className="w-6 h-6" />
                 <span className="absolute top-0 right-0 p-2 h-4 w-4 text-xs bg-red-600 text-white rounded-full flex items-center justify-center font-bold border-2 border-white">
@@ -784,7 +817,7 @@ const Navbar = () => {
               {/* Cart Icon */}
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2 sm:p-4 h-10 w-10 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer"
+                className="relative p-2 sm:p-4 h-10 w-10 sm:h-14 sm:w-14 flex items-center justify-center rounded-full shadow-lg hover:bg-brand-primary hover:text-white transition-colors duration-200 cursor-pointer"
               >
                 <ShoppingBag className="w-6 h-6" />
                 <span className="absolute top-0 right-0 p-2 h-4 w-4 text-xs bg-red-600 text-white rounded-full flex items-center justify-center font-bold border-2 border-white">
@@ -805,73 +838,73 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Discount Bar (now wired to saleBanner but same style) */}
-      <div
-        className="bg-black opacity-95 text-white relative py-8 overflow-hidden"
-        style={{
-          backgroundImage:
-            'url("https://imgs.search.brave.com/2oNgA6Q7ynZOmLW_LQPcMwX4QefVm29VzZWeSPzzmo8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/dGhlZmFzaGlvbnN0/YXRpb24uaW4vd3At/Y29udGVudC91cGxv/YWRzLzIwMjUvMTEv/emFyYS1zaGFoamFo/YW4tMTYwMHg2MjUu/d2VicA")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="sm:px-8 px-4 lg:px-10 flex-row sm:flex items-center text-center justify-between">
-          <div className="text-sm sm:text-base font-semibold">
-            {saleBanner?.message || (
-              <>
-                DON'T MISS{" "}
-                <span className="text-yellow-400 font-extrabold">
-                  70% OFF
-                </span>{" "}
-                ALL SALE! NO CODE NEEDED!
-              </>
+      {/* Deal Banner - Only shown when saleBanner is active */}
+      {saleBanner?.isActive && (
+        <div
+          className="bg-black opacity-95 text-white relative py-4 sm:py-8 overflow-hidden"
+          style={{
+            backgroundImage:
+              'url("https://imgs.search.brave.com/2oNgA6Q7ynZOmLW_LQPcMwX4QefVm29VzZWeSPzzmo8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/dGhlZmFzaGlvbnN0/YXRpb24uaW4vd3At/Y29udGVudC91cGxv/YWRzLzIwMjUvMTEv/emFyYS1zaGFoamFo/YW4tMTYwMHg2MjUu/d2VicA")',
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="px-4 sm:px-8 lg:px-10 flex flex-col sm:flex-row items-center text-center sm:text-left justify-between gap-3 sm:gap-0">
+            <div className="text-xs sm:text-sm md:text-base font-semibold">
+              {saleBanner?.message || (
+                <>
+                  DON'T MISS{" "}
+                  <span className="text-yellow-400 font-extrabold">
+                    70% OFF
+                  </span>{" "}
+                  ALL SALE! NO CODE NEEDED!
+                </>
+              )}
+            </div>
+
+            {timeLeft ? (
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 md:gap-4">
+                <TimerSegment value={timeLeft.days} label="Days" />
+                <TimerSegment value={timeLeft.hours} label="Hours" />
+                <TimerSegment value={timeLeft.minutes} label="Mins" />
+                <TimerSegment value={timeLeft.seconds} label="Secs" />
+                <Button
+                  asChild
+                  className="h-9 sm:h-12 md:h-14 w-auto px-3 sm:px-5 md:px-6 bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 group"
+                >
+                  <Link to="/deals" className="flex items-center gap-1 sm:gap-2">
+                    <span className="whitespace-nowrap">View Deals</span>
+                    <FaLongArrowAltRight
+                      className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-transform duration-300 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-0.5"
+                    />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              // If no timer configured, just button
+              <div className="flex items-center justify-center">
+                <Button
+                  asChild
+                  className="h-9 sm:h-12 md:h-14 w-auto px-3 sm:px-5 md:px-6 bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 group"
+                >
+                  <Link to="/deals" className="flex items-center gap-1 sm:gap-2">
+                    <span className="whitespace-nowrap">View Deals</span>
+                    <FaLongArrowAltRight
+                      className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-transform duration-300 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-0.5"
+                    />
+                  </Link>
+                </Button>
+              </div>
             )}
           </div>
-
-          {timeLeft ? (
-            <div className="flex items-center justify-between gap-2 sm:gap-4 mt-4 sm:mt-0">
-              <TimerSegment value={timeLeft.days} label="Days" />
-              <TimerSegment value={timeLeft.hours} label="Hours" />
-              <TimerSegment value={timeLeft.minutes} label="Mins" />
-              <TimerSegment value={timeLeft.seconds} label="Secs" />
-              <Button
-                asChild
-                className="sm:h-12 sm:w-36 lg:h-14 lg:w-40 bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 group"
-              >
-                <Link to="/deals" className="flex items-center space-x-1">
-                  <span>View All Deals</span>
-                  <FaLongArrowAltRight
-                    className="w-4 h-4 sm:w-8 sm:h-8 transition-transform duration-300 transform 
-                        rotate-[-45deg]
-                        group-hover:rotate-0 group-hover:translate-x-0.5"
-                  />
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            // If no timer configured, just button
-            <div className="flex items-center justify-center mt-4 sm:mt-0">
-              <Button
-                asChild
-                className="sm:h-12 sm:w-36 lg:h-14 lg:w-40 bg-transparent text-white border-2 border-white hover:bg-white hover:text-black rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 group"
-              >
-                <Link to="/deals" className="flex items-center space-x-1">
-                  <span>View All Deals</span>
-                  <FaLongArrowAltRight
-                    className="w-4 h-4 sm:w-8 sm:h-8 transition-transform duration-300 transform 
-                        rotate-[-45deg]
-                        group-hover:rotate-0 group-hover:translate-x-0.5"
-                  />
-                </Link>
-              </Button>
-            </div>
-          )}
         </div>
-      </div>
+      )}
 
-      {/* Marquee – now using backend data with graceful fallback */}
+      {/* Marquee Bar - Now using backend data with graceful fallback */}
       <div>
-        <MarqueeBar messages={marqueeMessages} />
+        <MarqueeBar 
+          messages={marqueeMessages && marqueeMessages.length > 0 ? marqueeMessages : DEFAULT_MARQUEE_MESSAGES} 
+        />
       </div>
     </>
   );

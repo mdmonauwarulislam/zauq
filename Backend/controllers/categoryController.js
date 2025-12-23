@@ -1,4 +1,5 @@
 import Category from "../models/Category.js";
+import Product from "../models/Product.js";
 import { asyncHandler, ErrorHandler } from "../utils/error.js";
 import { RESPONSE_MESSAGES } from "../utils/constant.js";
 
@@ -16,10 +17,22 @@ export const getAllCategories = asyncHandler(async (req, res) => {
 
   const categories = await Category.find(filter).sort({ displayOrder: 1, name: 1 });
 
+  // Add product count for each category
+  const categoriesWithCount = await Promise.all(
+    categories.map(async (category) => {
+      const productCount = await Product.countDocuments({ category: category._id });
+      return {
+        ...category.toObject(),
+        productCount,
+        itemCount: productCount, // For backward compatibility
+      };
+    })
+  );
+
   return res.status(200).json({
     success: true,
     message: RESPONSE_MESSAGES.SUCCESS,
-    categories,
+    categories: categoriesWithCount,
   });
 });
 
@@ -38,10 +51,22 @@ export const getFeaturedCategories = asyncHandler(async (req, res) => {
     .sort({ displayOrder: 1, name: 1 })
     .limit(limit);
 
+  // Add product count for each category
+  const categoriesWithCount = await Promise.all(
+    categories.map(async (category) => {
+      const productCount = await Product.countDocuments({ category: category._id });
+      return {
+        ...category.toObject(),
+        productCount,
+        itemCount: productCount, // For backward compatibility
+      };
+    })
+  );
+
   return res.status(200).json({
     success: true,
     message: RESPONSE_MESSAGES.SUCCESS,
-    categories,
+    categories: categoriesWithCount,
   });
 });
 

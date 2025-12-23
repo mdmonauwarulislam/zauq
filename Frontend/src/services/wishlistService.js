@@ -1,26 +1,48 @@
-import api from "../config/apiConfig";
+import Request from "../config/apiConfig";
+import apiUrls from "../config/apiUrls";
 
-class WishlistService {
-  async getWishlist() {
-    const response = await api.get("/wishlist");
-    return response.data;
-  }
+const getWishlist = async () => {
+  const response = await Request({
+    url: apiUrls.wishlist.list,
+    method: "GET",
+    secure: true,
+  });
+  return response.data;
+};
 
-  async addToWishlist(productId) {
-    const response = await api.post("/wishlist", { productId });
-    return response.data;
-  }
+const addToWishlist = async (productId) => {
+  const response = await Request({
+    url: apiUrls.wishlist.add,
+    method: "POST",
+    data: { productId },
+    secure: true,
+  });
+  return response.data;
+};
 
-  async removeFromWishlist(productId) {
-    const response = await api.delete(`/wishlist/${productId}`);
-    return response.data;
-  }
+const removeFromWishlist = async (productId) => {
+  const response = await Request({
+    url: apiUrls.wishlist.remove(productId),
+    method: "DELETE",
+    secure: true,
+  });
+  return response.data;
+};
 
-  async clearWishlist() {
-    const response = await api.delete("/wishlist");
-    return response.data;
-  }
-}
+const clearWishlist = async () => {
+  const response = await Request({
+    url: apiUrls.wishlist.clear,
+    method: "DELETE",
+    secure: true,
+  });
+  return response.data;
+};
 
-const wishlistService = new WishlistService();
+const wishlistService = {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+  clearWishlist,
+};
+
 export default wishlistService;

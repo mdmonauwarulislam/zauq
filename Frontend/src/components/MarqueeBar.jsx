@@ -5,7 +5,7 @@ const MarqueeBar = ({ messages }) => {
     const allMessages = [...messages, ...messages];
   
     return (
-      <div className="bg-purple-950 text-white overflow-hidden py-2 shadow-inner">
+      <div className="bg-brand-primary text-brand-text-primary overflow-hidden py-2 shadow-inner">
         <div className="flex w-fit MarqueeBar_marquee__content">
           {allMessages.map((message, index) => (
             <div
@@ -19,7 +19,7 @@ const MarqueeBar = ({ messages }) => {
         {/* This is a common technique to make the content wide enough to scroll off-screen,
           and the keyframe animation (defined in the CSS below) handles the infinite loop. 
         */}
-        <style jsx>{`
+        <style jsx="true">{`
           .MarqueeBar_marquee__content {
             animation: MarqueeBar_marquee__animation 10s linear infinite;
           }

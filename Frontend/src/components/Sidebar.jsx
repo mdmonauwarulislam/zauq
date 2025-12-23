@@ -10,28 +10,24 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-// import Logo from "@/assets/images/logo.png";
 import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
-  Users,
-  BookOpen,
-  GraduationCap,
-  Calendar,
   FileText,
-  Settings,
-  HelpCircle,
-  LogOut,
+  ShoppingBag,
   Home,
-  BarChart3,
-  Bell,
-  User,
-  Building,
-  Notebook,
+  Settings,
+  Tag,
+  Package,
+  Users,
+  Star,
+  LogOut,
+  Sparkles,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FaCertificate } from "react-icons/fa";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -44,33 +40,70 @@ const Sidebar = () => {
   const isActive = (path) => {
     return location.pathname === path;
   };
+  
   const menuItems = [
-    { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard", active: isActive("/dashboard") },
-    { title: "Categories", icon: FileText, href: "/dashboard/categories", active: isActive("/dashboard/categories") },
-    { title: "Products", icon: BookOpen, href: "/dashboard/products", active: isActive("/dashboard/products") },
-    { title: "Hero & Home", icon: Home, href: "/dashboard/hero", active: isActive("/dashboard/hero") },
-    { title: "Coupons", icon: Bell, href: "/dashboard/coupons", active: isActive("/dashboard/coupons") },
-    { title: "Orders", icon: BarChart3, href: "/dashboard/orders", active: isActive("/dashboard/orders") },
-    { title: "Users", icon: User, href: "/dashboard/users", active: isActive("/dashboard/users") },
-    { title: "Reviews", icon: BookOpen, href: "/dashboard/reviews", active: isActive("/dashboard/reviews") },
-  ];
-
-  const bottomMenuItems = [
-    {
-      title: "Notifications",
-      icon: Bell,
-      href: "/notifications",
-      badge: "3",
+    { 
+      title: "Dashboard", 
+      icon: LayoutDashboard, 
+      href: "/dashboard", 
+      active: isActive("/dashboard"),
+      gradient: "from-brand-primary to-brand-primary"
     },
-    {
-      title: "Settings",
-      icon: Settings,
-      href: "/settings",
+    { 
+      title: "Categories", 
+      icon: FileText, 
+      href: "/dashboard/categories", 
+      active: isActive("/dashboard/categories"),
+      gradient: "from-purple-500 to-pink-500"
     },
-    {
-      title: "Help & Support",
-      icon: HelpCircle,
-      href: "/help",
+    { 
+      title: "Products", 
+      icon: ShoppingBag, 
+      href: "/dashboard/products", 
+      active: isActive("/dashboard/products"),
+      gradient: "from-green-500 to-emerald-500"
+    },
+    { 
+      title: "Orders", 
+      icon: Package, 
+      href: "/dashboard/orders", 
+      active: isActive("/dashboard/orders"),
+      gradient: "from-purple-500 to-indigo-500"
+    },
+    { 
+      title: "Users", 
+      icon: Users, 
+      href: "/dashboard/users", 
+      active: isActive("/dashboard/users"),
+      gradient: "from-indigo-500 to-blue-500"
+    },
+    { 
+      title: "Reviews", 
+      icon: Star, 
+      href: "/dashboard/reviews", 
+      active: isActive("/dashboard/reviews"),
+      gradient: "from-amber-500 to-orange-500"
+    },
+    { 
+      title: "Coupons", 
+      icon: Tag, 
+      href: "/dashboard/coupons", 
+      active: isActive("/dashboard/coupons"),
+      gradient: "from-pink-500 to-rose-500"
+    },
+    { 
+      title: "Hero Config", 
+      icon: Sparkles, 
+      href: "/dashboard/hero", 
+      active: isActive("/dashboard/hero"),
+      gradient: "from-orange-500 to-amber-500"
+    },
+    { 
+      title: "Navbar Config", 
+      icon: Settings, 
+      href: "/dashboard/navbar", 
+      active: isActive("/dashboard/navbar"),
+      gradient: "from-teal-500 to-cyan-500"
     },
   ];
 
@@ -92,37 +125,36 @@ const Sidebar = () => {
   return (
     <div
       className={cn(
-        "bg-white border-r border-gray-200 h-screen flex flex-col transition-all duration-300 ease-in-out overflow-y-scroll shadow-lg",
-        collapsed ? "w-24" : "w-64"
+        "bg-linear-to-br from-slate-50 to-gray-100 border-r-2 border-gray-200 h-screen flex flex-col transition-all duration-300 ease-in-out overflow-y-scroll shadow-xl",
+        collapsed ? "w-20" : "w-72"
       )}
       style={{
         scrollbarWidth: "none",
       }}
     >
       {/* Header */}
-      <div className="p-6">
+      <div className="p-5 border-b-2 border-gray-200 bg-white/80 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           {!collapsed && (
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-24 h-22  rounded-3xl flex items-center justify-center shadow-md border-2 border-gray-200">
-                {/* <img
-                  src={Logo}
-                  alt="Logo"
-                  className="w-full h-full rounded-2xl"
-                /> */}
-                ZUAQ
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg border-2 border-white">
+                <ShoppingBag className="w-6 h-6 text-white" />
               </div>
-              <div className="w-full flex items-center justify-center">
-                <h2 className="text-sm font-semibold text-gray-900 text-center">
-                  Grow More Safety
+              <div>
+                <h2 className="text-xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  ZAUQ
                 </h2>
+                <p className="text-xs text-gray-500 font-medium">Admin Panel</p>
               </div>
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 text-gray-600 hover:bg-[#1B941C] hover:text-white rounded-3xl border border-gray-200 transition-all duration-200 shadow-sm"
+            className={cn(
+              "h-9 w-9 rounded-lg hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-200 shadow-sm border border-gray-200",
+              collapsed && "mx-auto"
+            )}
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
@@ -135,27 +167,22 @@ const Sidebar = () => {
       </div>
 
       {/* User Profile */}
-      <div className="px-6 pb-6">
-        <div className="bg-gradient-to-r from-gray-50 to-green-50 rounded-3xl p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <img
-                src={
-                  user?.profile_image ||
-                  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                }
-                alt="profile"
-                className="w-10 h-10 rounded-2xl object-cover border-2 border-[#1B941C] shadow-md"
-              />
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#1B941C] rounded-full border-2 border-white shadow-sm"></div>
+      <div className={cn("bg-white/80 backdrop-blur-sm border-b-2 border-gray-200", collapsed ? "p-2" : "p-5")}>
+        <div className={cn("bg-linear-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-100 shadow-sm", collapsed ? "p-2" : "p-4")}>
+          <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+            <div className="relative shrink-0">
+              <div className="w-11 h-11 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md border-2 border-white">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
-                  {user?.name || "Admin User"}
+                <p className="text-sm font-bold text-gray-900 truncate">
+                  {user?.firstName || "Admin"} {user?.lastName || "User"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {user?.email || "admin@mmch.edu"}
+                <p className="text-xs text-gray-600 truncate">
+                  {user?.email || "admin@zauq.com"}
                 </p>
               </div>
             )}
@@ -164,16 +191,17 @@ const Sidebar = () => {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 px-6 pb-6 space-y-2">
-        <div className="space-y-2">
-          {!collapsed && (
-            <div className="px-3 mb-3">
-              <p className="text-xs font-bold text-[#1B941C] uppercase tracking-wider">
-                Main Menu
-              </p>
-              <div className="w-8 h-0.5 bg-[#1B941C] rounded-full mt-1"></div>
-            </div>
-          )}
+      <nav className="flex-1 p-5 space-y-2 bg-white/50 backdrop-blur-sm">
+        {!collapsed && (
+          <div className="mb-4">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2">
+              Navigation
+            </h3>
+            <div className="w-12 h-0.5 bg-linear-to-r from-blue-500 to-purple-500 rounded-full ml-3"></div>
+          </div>
+        )}
+        
+        <div className="space-y-1.5">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             return (
@@ -181,71 +209,22 @@ const Sidebar = () => {
                 key={index}
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start h-12 px-4 rounded-3xl transition-all duration-200",
-                  collapsed && "justify-center px-0 w-12 h-12 mx-auto",
+                  "w-full justify-start h-11 px-3 rounded-xl transition-all duration-200 group relative overflow-hidden",
+                  collapsed && "justify-center px-0 w-11 h-11 mx-auto",
                   item.active
-                    ? "bg-[#1B941C] text-white hover:bg-[#16a319] shadow-md border border-[#1B941C]"
-                    : "text-gray-700 hover:bg-green-50 hover:text-[#1B941C] border border-transparent hover:border-gray-200 hover:shadow-sm"
+                    ? `bg-linear-to-r ${item.gradient} text-white shadow-lg border-2 border-white hover:shadow-xl transform hover:scale-105`
+                    : "text-gray-700 hover:bg-white hover:text-gray-900 border-2 border-transparent hover:border-gray-200 hover:shadow-md"
                 )}
                 onClick={() => navigate(item.href)}
               >
-                <Icon className={cn("h-5 w-5", !collapsed && "mr-3")} />
+                <Icon className={cn("h-5 w-5 flex-shrink-0", !collapsed && "mr-3")} />
                 {!collapsed && (
-                  <>
-                    <span className="flex-1 text-left font-medium">
-                      {item.title}
-                    </span>
-                    {item.badge && (
-                      <span className="ml-auto text-xs bg-red-500 text-white px-2 py-1 rounded-2xl">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
+                  <span className="flex-1 text-left font-semibold text-sm">
+                    {item.title}
+                  </span>
                 )}
-              </Button>
-            );
-          })}
-        </div>
-
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-gray-200" />
-          </div>
-          {!collapsed && (
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-4 py-1 text-[#1B941C] font-bold tracking-wider rounded-2xl border border-gray-200 shadow-sm">
-                Quick Actions
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Menu Items */}
-        <div className="space-y-2">
-          {bottomMenuItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <Button
-                key={index}
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start h-11 px-4 text-gray-700 hover:bg-green-50 hover:text-[#1B941C] rounded-3xl border border-transparent hover:border-gray-200 hover:shadow-sm transition-all duration-200",
-                  collapsed && "justify-center px-0 w-11 h-11 mx-auto"
-                )}
-              >
-                <Icon className={cn("h-4 w-4", !collapsed && "mr-3")} />
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 text-left font-medium">
-                      {item.title}
-                    </span>
-                    {item.badge && (
-                      <span className="ml-auto text-xs bg-[#1B941C] text-white px-2 py-1 rounded-2xl shadow-sm border border-gray-200">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
+                {!collapsed && item.active && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-l-full"></div>
                 )}
               </Button>
             );
@@ -254,26 +233,26 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer with Logout */}
-      <div className="px-6 pb-6 border-t border-gray-200 pt-6">
+      <div className="p-5 border-t-2 border-gray-200 bg-white/80 backdrop-blur-sm">
         <Button
           variant="ghost"
           className={cn(
-            "w-full justify-start h-11 px-4 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-3xl border border-transparent hover:border-red-200 hover:shadow-sm transition-all duration-200 font-semibold",
+            "w-full justify-start h-11 px-3 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl border-2 border-transparent hover:border-red-200 hover:shadow-md transition-all duration-200 font-bold",
             collapsed && "justify-center px-0 w-11 h-11 mx-auto"
           )}
           onClick={handleLogout}
         >
-          <LogOut className={cn("h-4 w-4", !collapsed && "mr-3")} />
+          <LogOut className={cn("h-5 w-5", !collapsed && "mr-3")} />
           {!collapsed && <span>Logout</span>}
         </Button>
 
         {!collapsed && (
-          <div className="mt-4 p-3 bg-gradient-to-r from-gray-50 to-green-50 rounded-3xl border border-gray-200 shadow-sm">
-            <div className="text-xs text-gray-500 text-center space-y-1">
-              <p className="font-semibold text-[#1B941C]">
-                © 2025 Grow More Safety
+          <div className="mt-4 p-3 bg-linear-to-br from-gray-50 to-slate-100 rounded-xl border-2 border-gray-200 shadow-sm">
+            <div className="text-xs text-center space-y-0.5">
+              <p className="font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                © 2025 ZAUQ Store
               </p>
-              <p className="text-gray-400">Version 1.0.0</p>
+              <p className="text-gray-500 font-medium">Version 1.0.0</p>
             </div>
           </div>
         )}
@@ -281,26 +260,25 @@ const Sidebar = () => {
 
       {/* Logout Confirmation Dialog */}
       <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent className="max-w-md rounded-3xl">
+        <DialogContent className="max-w-md rounded-2xl border-2 border-gray-200 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-2xl">
-                <LogOut className="h-5 w-5 text-red-600" />
+              <div className="p-3 bg-linear-to-br from-red-100 to-rose-100 rounded-xl border-2 border-red-200">
+                <LogOut className="h-6 w-6 text-red-600" />
               </div>
-              <span className="text-xl font-semibold text-gray-900">
+              <span className="text-2xl font-bold text-gray-900">
                 Confirm Logout
               </span>
             </DialogTitle>
           </DialogHeader>
 
-          <div className="py-4">
-            <p className="text-gray-600 text-center">
+          <div className="py-4 space-y-4">
+            <p className="text-gray-700 text-center font-medium">
               Are you sure you want to logout from your account?
             </p>
-            <div className="mt-4 p-3 bg-yellow-50 rounded-2xl border border-yellow-200">
-              <p className="text-sm text-yellow-800">
-                <span className="font-medium">Note:</span> You will need to
-                login again to access your dashboard.
+            <div className="p-4 bg-linear-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+              <p className="text-sm text-amber-900">
+                <span className="font-bold">Note:</span> You will need to login again to access your dashboard.
               </p>
             </div>
           </div>
@@ -309,13 +287,13 @@ const Sidebar = () => {
             <Button
               onClick={cancelLogout}
               variant="outline"
-              className="rounded-2xl border-gray-200 hover:bg-gray-50"
+              className="rounded-xl border-2 border-gray-300 hover:bg-gray-50 font-semibold"
             >
               Cancel
             </Button>
             <Button
               onClick={confirmLogout}
-              className="bg-red-600 hover:bg-red-700 text-white rounded-2xl"
+              className="bg-linear-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl font-semibold shadow-md"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Yes, Logout
