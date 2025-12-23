@@ -2,12 +2,12 @@ import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
-import Signup from "./views/auth/Signup";
+import Signup from "./Views/Auth/Signup";
 import Login from "./Views/Auth/Login";
 
 import DashboardLayout from "./layout/dashboardLayout";
 import MainLayout from "./layout/mainLayout";
-import NotFoundPage from "./views/404";
+import NotFoundPage from "./Views/404/index";
 
 import { Toaster } from "react-hot-toast";
 
