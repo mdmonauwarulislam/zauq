@@ -1,4 +1,4 @@
-import app from "./app.js";
+import app from "./server.js";
 import { connectDB } from "./config/db.js";
 import HomepageConfig from "./models/HomepageConfig.js";
 
