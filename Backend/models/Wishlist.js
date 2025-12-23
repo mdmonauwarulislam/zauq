@@ -32,8 +32,7 @@ const wishlistSchema = new Schema(
   }
 );
 
-// Index for faster queries
-wishlistSchema.index({ user: 1 });
+
 
 const Wishlist = model("Wishlist", wishlistSchema);
 

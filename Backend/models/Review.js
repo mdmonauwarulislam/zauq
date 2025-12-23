@@ -51,16 +51,6 @@ const reviewSchema = new Schema(
   { timestamps: true }
 );
 
-/**
- * Prevent same user from reviewing the same product twice.
- */
-reviewSchema.index({ product: 1, user: 1 }, { unique: true });
-
-/**
- * Additional helpful indexes.
- */
-reviewSchema.index({ rating: -1 });
-reviewSchema.index({ createdAt: -1 });
 
 const Review = model("Review", reviewSchema);
 

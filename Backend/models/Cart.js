@@ -46,8 +46,6 @@ const cartSchema = new Schema(
   }
 );
 
-// Index for faster queries
-cartSchema.index({ user: 1 });
 
 // Calculate total amount before saving
 cartSchema.pre("save", function () {
