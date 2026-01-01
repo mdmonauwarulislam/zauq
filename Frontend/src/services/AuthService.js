@@ -51,12 +51,12 @@ const changePassword = async (payload) =>
  */
 
 // Get all users (GET /api/auth/users)
-const getAllUsers = async ({ page, limit, searchTerm } = {}) =>
+const getAllUsers = async (params = {}) =>
   Request({
     url: apiUrls.auth.users,
     method: "GET",
     secure: true,
-    params: { page, limit, searchTerm },
+    params,
   });
 
 // Get single user by id (GET /api/auth/users/:id)

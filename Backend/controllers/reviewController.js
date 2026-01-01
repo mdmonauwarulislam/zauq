@@ -192,26 +192,158 @@ export const getAllReviews = asyncHandler(async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
   const skip = (page - 1) * limit;
+  const { status, rating, search, sort } = req.query;
 
   const filter = {};
-  if (req.query.status === 'pending') {
+  
+  // Status filter
+  if (status === 'pending') {
     filter.isApproved = false;
-  } else if (req.query.status === 'approved') {
+  } else if (status === 'approved') {
     filter.isApproved = true;
+  } else if (status === 'featured') {
+    filter.isFeatured = true;
   }
 
-  const total = await Review.countDocuments(filter);
-  const reviews = await Review.find(filter)
-    .populate("user", "firstName lastName")
-    .populate("product", "name")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
+  // Rating filter
+  if (rating) {
+    filter.rating = Number(rating);
+  }
+
+  // Build aggregation pipeline for search
+  let reviews;
+  let total;
+
+  if (search) {
+    const searchPipeline = [
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'product',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          ...filter,
+          $or: [
+            { 'user.firstName': { $regex: search, $options: 'i' } },
+            { 'user.lastName': { $regex: search, $options: 'i' } },
+            { 'product.name': { $regex: search, $options: 'i' } },
+            { comment: { $regex: search, $options: 'i' } },
+            { title: { $regex: search, $options: 'i' } }
+          ]
+        }
+      }
+    ];
+
+    // Get total count for search
+    const countResult = await Review.aggregate([...searchPipeline, { $count: 'total' }]);
+    total = countResult[0]?.total || 0;
+
+    // Sorting
+    let sortObj = { createdAt: -1 };
+    if (sort === 'oldest') sortObj = { createdAt: 1 };
+    else if (sort === 'rating_high') sortObj = { rating: -1 };
+    else if (sort === 'rating_low') sortObj = { rating: 1 };
+
+    reviews = await Review.aggregate([
+      ...searchPipeline,
+      { $sort: sortObj },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          comment: 1,
+          rating: 1,
+          isApproved: 1,
+          isFeatured: 1,
+          createdAt: 1,
+          'user._id': 1,
+          'user.firstName': 1,
+          'user.lastName': 1,
+          'product._id': 1,
+          'product.name': 1
+        }
+      }
+    ]);
+  } else {
+    total = await Review.countDocuments(filter);
+
+    // Sorting
+    let sortObj = { createdAt: -1 };
+    if (sort === 'oldest') sortObj = { createdAt: 1 };
+    else if (sort === 'rating_high') sortObj = { rating: -1 };
+    else if (sort === 'rating_low') sortObj = { rating: 1 };
+
+    reviews = await Review.find(filter)
+      .populate("user", "firstName lastName")
+      .populate("product", "name")
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limit);
+  }
+
+  // Get stats
+  const stats = await Review.aggregate([
+    {
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        approved: { $sum: { $cond: ['$isApproved', 1, 0] } },
+        pending: { $sum: { $cond: ['$isApproved', 0, 1] } },
+        featured: { $sum: { $cond: ['$isFeatured', 1, 0] } },
+        avgRating: { $avg: '$rating' },
+        rating1: { $sum: { $cond: [{ $eq: ['$rating', 1] }, 1, 0] } },
+        rating2: { $sum: { $cond: [{ $eq: ['$rating', 2] }, 1, 0] } },
+        rating3: { $sum: { $cond: [{ $eq: ['$rating', 3] }, 1, 0] } },
+        rating4: { $sum: { $cond: [{ $eq: ['$rating', 4] }, 1, 0] } },
+        rating5: { $sum: { $cond: [{ $eq: ['$rating', 5] }, 1, 0] } }
+      }
+    }
+  ]);
+
+  const reviewStats = stats[0] || {
+    total: 0,
+    approved: 0,
+    pending: 0,
+    featured: 0,
+    avgRating: 0,
+    rating1: 0,
+    rating2: 0,
+    rating3: 0,
+    rating4: 0,
+    rating5: 0
+  };
 
   return res.status(200).json({
     success: true,
     message: RESPONSE_MESSAGES.SUCCESS,
     reviews,
+    stats: {
+      ...reviewStats,
+      avgRating: reviewStats.avgRating ? Number(reviewStats.avgRating.toFixed(1)) : 0,
+      ratingDistribution: {
+        1: reviewStats.rating1,
+        2: reviewStats.rating2,
+        3: reviewStats.rating3,
+        4: reviewStats.rating4,
+        5: reviewStats.rating5
+      }
+    },
     pagination: {
       page,
       limit,

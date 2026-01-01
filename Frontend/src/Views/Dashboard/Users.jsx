@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useState, } from "react";
 import AuthService from "@/services/AuthService";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
   Shield,
   Mail,
   Calendar,
-  MoreVertical,
   Eye,
   Ban,
   Trash2,
@@ -18,23 +18,38 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  ArrowUpDown,
+  X,
+  Phone,
+  MapPin,
+  ShieldCheck,
+  ShieldX,
+  UserCog,
+  Filter,
 } from "lucide-react";
 
-const PAGE_LIMIT = 12;
+const PAGE_LIMIT = 15;
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState({ total: 0, active: 0, blocked: 0, admins: 0 });
+  
+  // Filter states
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc");
+  
+  // UI states
   const [selected, setSelected] = useState(null);
-  const [openMenu, setOpenMenu] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ show: false, action: null, user: null });
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
-  const menuRef = useRef(null);
 
-  // Auto-hide toast after 3 seconds
+  // Auto-hide toast
   useEffect(() => {
     if (toast.show) {
       const timer = setTimeout(() => {
@@ -44,25 +59,25 @@ const Users = () => {
     }
   }, [toast.show]);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setOpenMenu(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const load = async (p = 1, searchTerm = "") => {
+  const load = async (p = 1) => {
     setLoading(true);
     try {
-      const res = await AuthService.getAllUsers({ page: p, limit: PAGE_LIMIT, searchTerm });
-      const data = res || res.data || {};
+      const params = { 
+        page: p, 
+        limit: PAGE_LIMIT,
+        sort: sortOrder === 'asc' ? 'createdAt' : '-createdAt',
+      };
+      if (search) params.search = search;
+      if (roleFilter) params.role = roleFilter;
+      if (statusFilter) params.status = statusFilter;
+      
+      const res = await AuthService.getAllUsers(params);
+      const data = res?.data || res || {};
       setUsers(data.users || []);
       setPage(data.pagination?.page || p);
       setTotalPages(data.pagination?.totalPages || 1);
+      setTotal(data.pagination?.total || 0);
+      if (data.stats) setStats(data.stats);
     } catch (err) {
       console.error(err);
       setToast({ show: true, message: 'Failed to load users', type: 'error' });
@@ -71,13 +86,19 @@ const Users = () => {
     }
   };
 
-  useEffect(() => {
-    load(1, "");
-  }, []);
+  useEffect(() => { load(1); }, [roleFilter, statusFilter, sortOrder]);
 
   const handleSearch = (ev) => {
-    ev.preventDefault();
-    load(1, search);
+    ev?.preventDefault();
+    load(1);
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setRoleFilter("");
+    setStatusFilter("");
+    setSortOrder("desc");
+    load(1);
   };
 
   const toggleBlock = async (user) => {
@@ -85,12 +106,27 @@ const Users = () => {
     try {
       await AuthService.updateUserByAdmin({ userId: user._id, isBlocked: !user.isBlocked });
       setToast({ show: true, message: `User ${user.isBlocked ? 'unblocked' : 'blocked'} successfully`, type: 'success' });
-      load(page, search);
+      load(page);
       if (selected && selected._id === user._id) {
         setSelected({ ...selected, isBlocked: !user.isBlocked });
       }
     } catch (err) {
-      setToast({ show: true, message: 'Failed to update user', type: 'error' },err);
+      setToast({ show: true, message: 'Failed to update user', type: 'error' });
+    }
+  };
+
+  const toggleRole = async (user) => {
+    setConfirmModal({ show: false, action: null, user: null });
+    try {
+      const newRole = user.role === 'admin' ? 'user' : 'admin';
+      await AuthService.updateUserByAdmin({ userId: user._id, role: newRole });
+      setToast({ show: true, message: `User role changed to ${newRole}`, type: 'success' });
+      load(page);
+      if (selected && selected._id === user._id) {
+        setSelected({ ...selected, role: newRole });
+      }
+    } catch (err) {
+      setToast({ show: true, message: 'Failed to update user role', type: 'error' });
     }
   };
 
@@ -99,187 +135,301 @@ const Users = () => {
     try {
       await AuthService.deleteUser(user._id);
       setToast({ show: true, message: 'User deleted successfully', type: 'success' });
-      load(page, search);
+      load(page);
       if (selected && selected._id === user._id) {
         setSelected(null);
       }
     } catch (err) {
-      setToast({ show: true, message: 'Failed to delete user', type: 'error' }, err);
+      setToast({ show: true, message: 'Failed to delete user', type: 'error' });
     }
   };
 
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  const formatDateTime = (date) => {
+    return new Date(date).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
-    <div className="p-6 space-y-6 w-full bg-linear-to-br from-gray-50 to-indigo-50/30">
-      {/* Header */}
-      <div className="bg-linear-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100 p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div className="p-6 space-y-6 w-full bg-gray-50 min-h-screen">
+      {/* Header with Stats */}
+      <div className="bg-white rounded-xl border border-brand-primary p-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-indigo-900 bg-clip-text text-transparent mb-2 flex items-center gap-2">
-              <UsersIcon className="w-8 h-8 text-indigo-600" />
+            <h1 className="text-3xl font-bold text-brand-primary mb-2 flex items-center gap-2">
+              <UsersIcon className="w-8 h-8" />
               User Management
             </h1>
             <p className="text-gray-600">View, manage, and moderate user accounts</p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-600">
-              Total: <span className="text-indigo-700 font-bold">{users.length}</span> users
-            </span>
+          
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-blue-50 rounded-lg px-4 py-2 border border-blue-100">
+              <p className="text-xs text-blue-600 font-medium">Total Users</p>
+              <p className="text-xl font-bold text-blue-700">{stats.total}</p>
+            </div>
+            <div className="bg-green-50 rounded-lg px-4 py-2 border border-green-100">
+              <p className="text-xs text-green-600 font-medium">Active</p>
+              <p className="text-xl font-bold text-green-700">{stats.active}</p>
+            </div>
+            <div className="bg-red-50 rounded-lg px-4 py-2 border border-red-100">
+              <p className="text-xs text-red-600 font-medium">Blocked</p>
+              <p className="text-xl font-bold text-red-700">{stats.blocked}</p>
+            </div>
+            <div className="bg-purple-50 rounded-lg px-4 py-2 border border-purple-100">
+              <p className="text-xs text-purple-600 font-medium">Admins</p>
+              <p className="text-xl font-bold text-purple-700">{stats.admins}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-xl border border-indigo-100 p-6 shadow-sm">
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      {/* Filters Row */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <form onSubmit={handleSearch} className="relative flex-1 min-w-[200px] max-w-[300px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
-              placeholder="Search by name or email..."
+              type="text"
+              placeholder="Search name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
             />
+          </form>
+
+          {/* Role Filter */}
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all cursor-pointer"
+          >
+            <option value="">All Roles</option>
+            <option value="user">Users</option>
+            <option value="admin">Admins</option>
+          </select>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all cursor-pointer"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+          </select>
+
+          {/* Sort Order */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setSortOrder('desc')}
+              className={`px-3 py-2 text-sm font-medium transition-all flex items-center gap-1 ${
+                sortOrder === 'desc'
+                  ? 'bg-brand-primary text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              Newest
+            </button>
+            <button
+              onClick={() => setSortOrder('asc')}
+              className={`px-3 py-2 text-sm font-medium transition-all flex items-center gap-1 border-l border-gray-200 ${
+                sortOrder === 'asc'
+                  ? 'bg-brand-primary text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Oldest
+            </button>
           </div>
-          <div className="flex gap-2">
-            <Button type="submit" className="bg-linear-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700">
-              Search
-            </Button>
-            <Button variant="outline" onClick={() => { setSearch(""); load(1, ""); }}>
-              Reset
-            </Button>
+
+          {/* Clear Filters */}
+          {(search || roleFilter || statusFilter || sortOrder !== 'desc') && (
+            <button
+              onClick={clearFilters}
+              className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-1 transition-all"
+            >
+              <X className="w-4 h-4" />
+              Clear
+            </button>
+          )}
+
+          {/* Users Count */}
+          <div className="ml-auto text-sm text-gray-600">
+            <span className="font-bold text-brand-primary">{total}</span> users found
           </div>
-        </form>
+        </div>
       </div>
 
+      {/* Users Table */}
       {loading ? (
-        <div className="bg-white rounded-xl border border-indigo-100 p-12 text-center shadow-sm">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Loading users...</p>
         </div>
       ) : users.length === 0 ? (
-        <div className="bg-white rounded-xl border border-indigo-100 p-12 text-center shadow-sm">
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
           <UsersIcon className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <p className="text-lg font-semibold text-gray-700">No users found</p>
-          <p className="text-sm text-gray-500 mt-1">Try adjusting your search criteria</p>
+          <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters</p>
         </div>
       ) : (
         <>
-          {/* Users Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {users.map((user) => (
-              <div key={user._id} className="bg-white rounded-xl border-2 border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all overflow-hidden">
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="w-12 h-12 rounded-full bg-linear-to-br from-indigo-100 to-blue-100 flex items-center justify-center">
-                        <UsersIcon className="w-6 h-6 text-indigo-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-gray-900 truncate">{user.firstName} {user.lastName}</h3>
-                        <p className="text-sm text-gray-600 truncate flex items-center gap-1">
-                          <Mail className="w-3.5 h-3.5" />
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">User</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Addresses</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Joined</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {users.map(user => (
+                    <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                      {/* User Name */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
+                            {user.profileImage ? (
+                              <img src={user.profileImage} alt="" className="w-10 h-10 rounded-full object-cover" />
+                            ) : (
+                              <span className="text-brand-primary font-bold text-sm">
+                                {user.firstName?.[0]}{user.lastName?.[0]}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{user.firstName} {user.lastName}</p>
+                            <p className="text-xs text-gray-500">ID: {user._id.slice(-8)}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Email */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                          <Mail className="w-4 h-4 text-gray-400" />
                           {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Three-dot menu */}
-                    <div className="relative" ref={openMenu === user._id ? menuRef : null}>
-                      <button
-                        onClick={() => setOpenMenu(openMenu === user._id ? null : user._id)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <MoreVertical className="w-5 h-5 text-gray-600" />
-                      </button>
-                      
-                      {openMenu === user._id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border-2 border-gray-200 py-2 z-10">
+                        </div>
+                      </td>
+
+                      {/* Role */}
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          user.role === 'admin'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          <Shield className="w-3 h-3" />
+                          {user.role}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          user.isBlocked
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {user.isBlocked ? (
+                            <>
+                              <UserX className="w-3 h-3" />
+                              Blocked
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck className="w-3 h-3" />
+                              Active
+                            </>
+                          )}
+                        </span>
+                      </td>
+
+                      {/* Addresses */}
+                      <td className="px-4 py-3 text-center">
+                        <span className="bg-gray-100 px-2 py-1 rounded text-sm font-medium text-gray-700">
+                          {user.addresses?.length || 0}
+                        </span>
+                      </td>
+
+                      {/* Joined */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          {formatDate(user.createdAt)}
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1">
                           <button
-                            onClick={() => {
-                              setSelected(user);
-                              setOpenMenu(null);
-                            }}
-                            className="w-full px-4 py-2 text-left hover:bg-indigo-50 flex items-center gap-2 text-gray-700"
+                            onClick={() => setSelected(user)}
+                            className="p-2 rounded-lg hover:bg-brand-primary/10 text-gray-600 hover:text-brand-primary transition-colors"
+                            title="View Details"
                           >
                             <Eye className="w-4 h-4" />
-                            View Details
                           </button>
                           <button
-                            onClick={() => {
-                              setConfirmModal({ show: true, action: 'block', user });
-                              setOpenMenu(null);
-                            }}
-                            className="w-full px-4 py-2 text-left hover:bg-amber-50 flex items-center gap-2 text-gray-700"
+                            onClick={() => setConfirmModal({ show: true, action: 'block', user })}
+                            className={`p-2 rounded-lg transition-colors ${
+                              user.isBlocked
+                                ? 'hover:bg-green-50 text-gray-600 hover:text-green-600'
+                                : 'hover:bg-amber-50 text-gray-600 hover:text-amber-600'
+                            }`}
+                            title={user.isBlocked ? 'Unblock User' : 'Block User'}
                           >
-                            <Ban className="w-4 h-4" />
-                            {user.isBlocked ? 'Unblock' : 'Block'} User
+                            {user.isBlocked ? <UserCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
                           </button>
                           <button
-                            onClick={() => {
-                              setConfirmModal({ show: true, action: 'delete', user });
-                              setOpenMenu(null);
-                            }}
-                            className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-2 text-red-600"
+                            onClick={() => setConfirmModal({ show: true, action: 'role', user })}
+                            className="p-2 rounded-lg hover:bg-purple-50 text-gray-600 hover:text-purple-600 transition-colors"
+                            title={user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                          >
+                            <UserCog className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setConfirmModal({ show: true, action: 'delete', user })}
+                            className="p-2 rounded-lg hover:bg-red-50 text-gray-600 hover:text-red-600 transition-colors"
+                            title="Delete User"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Delete User
                           </button>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* User Info */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 flex items-center gap-1.5">
-                        <Shield className="w-4 h-4" />
-                        Role
-                      </span>
-                      <span className={`font-semibold px-3 py-1 rounded-full text-xs ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-700' 
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
-                        Joined
-                      </span>
-                      <span className="font-medium text-gray-900">
-                        {new Date(user.createdAt).toLocaleDateString('en-IN', { 
-                          day: 'numeric', 
-                          month: 'short', 
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Status Badge */}
-                  <div className="pt-4 border-t border-gray-100">
-                    {user.isBlocked ? (
-                      <div className="bg-linear-to-r from-red-50 to-rose-50 border-2 border-red-200 rounded-lg p-3 flex items-center gap-2">
-                        <UserX className="w-5 h-5 text-red-600" />
-                        <span className="text-sm font-semibold text-red-700">Blocked</span>
-                      </div>
-                    ) : (
-                      <div className="bg-linear-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-3 flex items-center gap-2">
-                        <UserCheck className="w-5 h-5 text-green-600" />
-                        <span className="text-sm font-semibold text-green-700">Active</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Pagination */}
-          <div className="bg-white rounded-xl border border-indigo-100 p-4 shadow-sm">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
                 Page <span className="font-bold text-gray-900">{page}</span> of <span className="font-bold text-gray-900">{totalPages}</span>
@@ -288,7 +438,7 @@ const Users = () => {
                 <Button
                   variant="outline"
                   disabled={page <= 1}
-                  onClick={() => load(page - 1, search)}
+                  onClick={() => load(page - 1)}
                   className="flex items-center gap-1"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -297,7 +447,7 @@ const Users = () => {
                 <Button
                   variant="outline"
                   disabled={page >= totalPages}
-                  onClick={() => load(page + 1, search)}
+                  onClick={() => load(page + 1)}
                   className="flex items-center gap-1"
                 >
                   Next
@@ -309,19 +459,167 @@ const Users = () => {
         </>
       )}
 
+      {/* User Details Modal */}
+      {selected && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4 overflow-y-auto"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8 max-h-[90vh] overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-brand-text-primary px-6 py-4 border-b border-gray-200 flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <div className="bg-brand-primary/10 p-2 rounded-lg">
+                  <UsersIcon className="w-6 h-6 text-brand-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">User Details</h3>
+                  <p className="text-sm text-gray-600">ID: {selected._id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelected(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* User Profile */}
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
+                  {selected.profileImage ? (
+                    <img src={selected.profileImage} alt="" className="w-20 h-20 rounded-full object-cover" />
+                  ) : (
+                    <span className="text-brand-primary font-bold text-2xl">
+                      {selected.firstName?.[0]}{selected.lastName?.[0]}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-2xl font-bold text-gray-900">{selected.firstName} {selected.lastName}</h4>
+                  <p className="text-gray-600">{selected.email}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      selected.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      <Shield className="w-3 h-3" />
+                      {selected.role}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      selected.isBlocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                    }`}>
+                      {selected.isBlocked ? <UserX className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
+                      {selected.isBlocked ? 'Blocked' : 'Active'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Info */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-brand-primary" />
+                  Account Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Joined</p>
+                    <p className="font-semibold text-gray-900">{formatDateTime(selected.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Last Updated</p>
+                    <p className="font-semibold text-gray-900">{formatDateTime(selected.updatedAt)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Addresses */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-brand-primary" />
+                  Saved Addresses ({selected.addresses?.length || 0})
+                </h4>
+                {selected.addresses?.length > 0 ? (
+                  <div className="space-y-3">
+                    {selected.addresses.map((addr, idx) => (
+                      <div key={idx} className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="font-semibold text-gray-900">{addr.name}</p>
+                          {addr.isDefault && (
+                            <span className="bg-brand-primary/10 text-brand-primary text-xs px-2 py-0.5 rounded-full font-medium">Default</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
+                          <Phone className="w-3.5 h-3.5" />
+                          {addr.phone || 'N/A'}
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          {addr.address}, {addr.city}, {addr.state} - {addr.postalCode}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No addresses saved</p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => {
+                    setConfirmModal({ show: true, action: 'block', user: selected });
+                  }}
+                  className={`flex-1 min-w-[150px] px-4 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                    selected.isBlocked
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-amber-600 hover:bg-amber-700 text-white'
+                  }`}
+                >
+                  {selected.isBlocked ? <UserCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                  {selected.isBlocked ? 'Unblock User' : 'Block User'}
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmModal({ show: true, action: 'role', user: selected });
+                  }}
+                  className="flex-1 min-w-[150px] px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                >
+                  <UserCog className="w-4 h-4" />
+                  {selected.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmModal({ show: true, action: 'delete', user: selected });
+                  }}
+                  className="flex-1 min-w-[150px] px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Modal */}
       {confirmModal.show && (
         <div 
-          className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4"
+          className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
           style={{ scrollbarWidth: 'none' }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-indigo-200">
-            <div className={`${
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
+            <div className={`p-6 border-b ${
               confirmModal.action === 'delete' 
-                ? 'bg-linear-to-r from-red-50 to-rose-50' 
-                : 'bg-linear-to-r from-amber-50 to-orange-50'
-            } p-6 border-b ${
-              confirmModal.action === 'delete' ? 'border-red-100' : 'border-amber-100'
+                ? 'bg-red-50 border-red-100' 
+                : confirmModal.action === 'role'
+                ? 'bg-purple-50 border-purple-100'
+                : confirmModal.user?.isBlocked
+                ? 'bg-green-50 border-green-100'
+                : 'bg-amber-50 border-amber-100'
             }`}>
               <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 {confirmModal.action === 'delete' ? (
@@ -329,10 +627,19 @@ const Users = () => {
                     <Trash2 className="w-6 h-6 text-red-600" />
                     Delete User
                   </>
+                ) : confirmModal.action === 'role' ? (
+                  <>
+                    <UserCog className="w-6 h-6 text-purple-600" />
+                    Change Role
+                  </>
                 ) : (
                   <>
-                    <Ban className="w-6 h-6 text-amber-600" />
-                    {confirmModal.user?.isBlocked ? 'Unblock' : 'Block'} User
+                    {confirmModal.user?.isBlocked ? (
+                      <UserCheck className="w-6 h-6 text-green-600" />
+                    ) : (
+                      <Ban className="w-6 h-6 text-amber-600" />
+                    )}
+                    {confirmModal.user?.isBlocked ? 'Unblock User' : 'Block User'}
                   </>
                 )}
               </h3>
@@ -342,16 +649,28 @@ const Users = () => {
               <p className="text-gray-700 mb-4">
                 {confirmModal.action === 'delete' 
                   ? 'Are you sure you want to permanently delete this user? This action cannot be undone.' 
+                  : confirmModal.action === 'role'
+                  ? `Are you sure you want to ${confirmModal.user?.role === 'admin' ? 'demote this admin to user' : 'promote this user to admin'}?`
                   : `Are you sure you want to ${confirmModal.user?.isBlocked ? 'unblock' : 'block'} this user?`}
               </p>
               
-              <div className={`${
-                confirmModal.action === 'delete' ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'
-              } rounded-lg p-4 mb-6 border`}>
+              <div className={`rounded-lg p-4 mb-6 border ${
+                confirmModal.action === 'delete' 
+                  ? 'bg-red-50 border-red-100' 
+                  : confirmModal.action === 'role'
+                  ? 'bg-purple-50 border-purple-100'
+                  : 'bg-gray-50 border-gray-100'
+              }`}>
                 <p className="text-sm text-gray-600 mb-1">
                   <span className="font-semibold text-gray-900">{confirmModal.user?.firstName} {confirmModal.user?.lastName}</span>
                 </p>
                 <p className="text-sm text-gray-600">{confirmModal.user?.email}</p>
+                {confirmModal.action === 'role' && (
+                  <p className="text-sm mt-2">
+                    Current role: <span className="font-semibold capitalize">{confirmModal.user?.role}</span> → 
+                    New role: <span className="font-semibold capitalize">{confirmModal.user?.role === 'admin' ? 'user' : 'admin'}</span>
+                  </p>
+                )}
               </div>
               
               <div className="flex gap-3">
@@ -362,106 +681,27 @@ const Users = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => confirmModal.action === 'delete' ? handleDelete(confirmModal.user) : toggleBlock(confirmModal.user)}
-                  className={`flex-1 px-4 py-2.5 ${
+                  onClick={() => {
+                    if (confirmModal.action === 'delete') {
+                      handleDelete(confirmModal.user);
+                    } else if (confirmModal.action === 'role') {
+                      toggleRole(confirmModal.user);
+                    } else {
+                      toggleBlock(confirmModal.user);
+                    }
+                  }}
+                  className={`flex-1 px-4 py-2.5 text-white rounded-lg font-semibold transition-all ${
                     confirmModal.action === 'delete'
-                      ? 'bg-linear-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700'
-                      : 'bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700'
-                  } text-white rounded-lg font-semibold transition-all shadow-sm`}
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : confirmModal.action === 'role'
+                      ? 'bg-purple-600 hover:bg-purple-700'
+                      : confirmModal.user?.isBlocked
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-amber-600 hover:bg-amber-700'
+                  }`}
                 >
                   Confirm
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Details Modal */}
-      {selected && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-indigo-200">
-            <div className="bg-linear-to-r from-indigo-50 to-blue-50 p-6 border-b border-indigo-100">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 mb-2">
-                    <UsersIcon className="w-7 h-7 text-indigo-600" />
-                    User Details
-                  </h3>
-                </div>
-                <button 
-                  onClick={() => setSelected(null)} 
-                  className="text-gray-500 hover:text-gray-700 hover:bg-white rounded-lg p-2 transition-all"
-                >
-                  <XCircle className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border-2 border-blue-100">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Name</p>
-                    <p className="font-bold text-gray-900 text-lg">{selected.firstName} {selected.lastName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Email</p>
-                    <p className="font-semibold text-gray-900 break-all">{selected.email}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-blue-200">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Role</p>
-                      <p className={`font-semibold px-3 py-1 rounded-full text-xs inline-block ${
-                        selected.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-700' 
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {selected.role}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Status</p>
-                      <p className={`font-semibold px-3 py-1 rounded-full text-xs inline-block ${
-                        selected.isBlocked 
-                          ? 'bg-red-100 text-red-700' 
-                          : 'bg-green-100 text-green-700'
-                      }`}>
-                        {selected.isBlocked ? 'Blocked' : 'Active'}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Joined</p>
-                    <p className="font-semibold text-gray-900">{new Date(selected.createdAt).toLocaleString('en-IN')}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelected(null)}
-                  className="flex-1"
-                >
-                  Close
-                </Button>
-                <Button 
-                  onClick={() => { 
-                    setConfirmModal({ show: true, action: 'block', user: selected });
-                    setSelected(null);
-                  }}
-                  className={`flex-1 ${
-                    selected.isBlocked
-                      ? 'bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-                      : 'bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700'
-                  } text-white`}
-                >
-                  {selected.isBlocked ? 'Unblock' : 'Block'}
-                </Button>
               </div>
             </div>
           </div>
@@ -473,13 +713,13 @@ const Users = () => {
         <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-right">
           <div className={`${
             toast.type === 'success' 
-              ? 'bg-linear-to-r from-green-500 to-emerald-600' 
-              : 'bg-linear-to-r from-red-500 to-rose-600'
-          } text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px] border-2 border-white/20`}>
+              ? 'bg-green-600' 
+              : 'bg-red-600'
+          } text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]`}>
             {toast.type === 'success' ? (
               <CheckCircle className="w-6 h-6 shrink-0" />
             ) : (
-              <AlertTriangle className="w-6 h-6shrink-0" />
+              <AlertTriangle className="w-6 h-6 shrink-0" />
             )}
             <p className="font-semibold">{toast.message}</p>
             <button

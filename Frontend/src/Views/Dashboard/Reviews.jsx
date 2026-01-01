@@ -1,15 +1,14 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
 import ReviewService from "@/services/reviewService";
 import { Button } from "@/components/ui/button";
 import { 
   Star, 
-  Eye, 
   Trash2, 
   Check, 
   X,
   MessageSquare,
   Search,
-  Filter,
   MoreVertical,
   User,
   Package,
@@ -20,21 +19,34 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Clock,
+  TrendingUp,
+  BarChart3,
+  ArrowUpDown,
 } from "lucide-react";
 
 const PAGE_LIMIT = 10;
 
 const Reviews = () => {
   const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  
+  // Filters
   const [statusFilter, setStatusFilter] = useState("all");
+  const [ratingFilter, setRatingFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  
   const [openMenu, setOpenMenu] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ show: false, action: null, review: null });
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
   const menuRef = useRef(null);
+  const searchTimeout = useRef(null);
 
   // Auto-hide toast after 3 seconds
   useEffect(() => {
@@ -57,16 +69,34 @@ const Reviews = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const load = async (p = 1, status = "all") => {
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(searchTimeout.current);
+  }, [searchInput]);
+
+  const load = async () => {
     setLoading(true);
     try {
-      const params = { page: p, limit: PAGE_LIMIT };
-      if (status !== "all") params.status = status;
+      const params = { page, limit: PAGE_LIMIT };
+      if (statusFilter !== "all") params.status = statusFilter;
+      if (ratingFilter !== "all") params.rating = ratingFilter;
+      if (searchQuery) params.search = searchQuery;
+      if (sortBy === "oldest") params.sort = "oldest";
+      else if (sortBy === "rating_high") params.sort = "rating_high";
+      else if (sortBy === "rating_low") params.sort = "rating_low";
+
       const res = await ReviewService.getAllReviews(params);
       const data = res || res.data || {};
       setReviews(data.reviews || []);
-      setPage(data.pagination?.page || p);
+      setStats(data.stats || null);
+      setPage(data.pagination?.page || page);
       setTotalPages(data.pagination?.pages || 1);
+      setTotalCount(data.pagination?.total || 0);
     } catch (err) {
       console.error(err);
       setToast({ show: true, message: 'Failed to load reviews', type: 'error' });
@@ -76,15 +106,15 @@ const Reviews = () => {
   };
 
   useEffect(() => {
-    load(1, statusFilter);
-  }, [statusFilter]);
+    load();
+  }, [statusFilter, ratingFilter, sortBy, searchQuery, page]);
 
   const handleApprove = async (review) => {
     setConfirmModal({ show: false, action: null, review: null });
     try {
       await ReviewService.approveReview(review._id);
       setToast({ show: true, message: 'Review approved successfully', type: 'success' });
-      load(page, statusFilter);
+      load();
     } catch (err) {
       setToast({ show: true, message: 'Failed to approve review', type: 'error' });
     }
@@ -95,7 +125,7 @@ const Reviews = () => {
     try {
       await ReviewService.deleteReview(review._id);
       setToast({ show: true, message: 'Review deleted successfully', type: 'success' });
-      load(page, statusFilter);
+      load();
     } catch (err) {
       setToast({ show: true, message: 'Failed to delete review', type: 'error' });
     }
@@ -106,199 +136,309 @@ const Reviews = () => {
     try {
       await ReviewService.toggleReviewFeatured(review._id, !review.isFeatured);
       setToast({ show: true, message: `Review ${review.isFeatured ? 'removed from' : 'marked as'} featured`, type: 'success' });
-      load(page, statusFilter);
+      load();
     } catch (err) {
       setToast({ show: true, message: 'Failed to update featured status', type: 'error' });
     }
   };
 
-  const renderStars = (rating) => {
+  const clearFilters = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    setStatusFilter("all");
+    setRatingFilter("all");
+    setSortBy("newest");
+    setPage(1);
+  };
+
+  const renderStars = (rating, size = "w-4 h-4") => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+        className={`${size} ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
       />
     ));
   };
 
-  const filteredReviews = reviews.filter(review => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      review.user?.firstName?.toLowerCase().includes(query) ||
-      review.user?.lastName?.toLowerCase().includes(query) ||
-      review.product?.name?.toLowerCase().includes(query) ||
-      review.comment?.toLowerCase().includes(query) ||
-      review.title?.toLowerCase().includes(query)
-    );
-  });
+  const getRatingBarWidth = (count) => {
+    if (!stats || stats.total === 0) return 0;
+    return (count / stats.total) * 100;
+  };
+
+  const hasActiveFilters = statusFilter !== "all" || ratingFilter !== "all" || sortBy !== "newest" || searchInput;
 
   return (
-    <div className="p-6 space-y-6 w-full bg-linear-to-br from-gray-50 to-amber-50/30">
-      {/* Header */}
-      <div className="bg-linear-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-100 p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    <div className="p-6 space-y-6 w-full bg-gray-50 min-h-screen">
+      {/* Header with Stats */}
+      <div className="bg-white rounded-xl border border-brand-primary p-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-amber-900 bg-clip-text text-transparent mb-2 flex items-center gap-2">
-              <MessageSquare className="w-8 h-8 text-amber-600" />
+            <h1 className="text-3xl font-bold text-brand-primary mb-2 flex items-center gap-2">
+              <MessageSquare className="w-8 h-8" />
               Reviews Management
             </h1>
-            <p className="text-gray-600">Approve, moderate, and showcase customer reviews</p>
+            <p className="text-gray-600">Moderate, approve, and showcase customer feedback</p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-600">
-              Total: <span className="text-amber-700 font-bold">{reviews.length}</span> reviews
-            </span>
-          </div>
+          
+          {/* Stats Cards */}
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="bg-blue-50 rounded-lg px-4 py-2 border border-blue-100">
+                <p className="text-xs text-blue-600 font-medium">Total</p>
+                <p className="text-xl font-bold text-blue-700">{stats.total}</p>
+              </div>
+              <div className="bg-yellow-50 rounded-lg px-4 py-2 border border-yellow-100">
+                <p className="text-xs text-yellow-600 font-medium">Pending</p>
+                <p className="text-xl font-bold text-yellow-700">{stats.pending}</p>
+              </div>
+              <div className="bg-green-50 rounded-lg px-4 py-2 border border-green-100">
+                <p className="text-xs text-green-600 font-medium">Approved</p>
+                <p className="text-xl font-bold text-green-700">{stats.approved}</p>
+              </div>
+              <div className="bg-purple-50 rounded-lg px-4 py-2 border border-purple-100">
+                <p className="text-xs text-purple-600 font-medium">Featured</p>
+                <p className="text-xl font-bold text-purple-700">{stats.featured}</p>
+              </div>
+              <div className="bg-amber-50 rounded-lg px-4 py-2 border border-amber-100">
+                <p className="text-xs text-amber-600 font-medium">Avg Rating</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xl font-bold text-amber-700">{stats.avgRating}</p>
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <div className="bg-white rounded-xl border border-amber-100 p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
+      {/* Rating Distribution */}
+      {stats && stats.ratingDistribution && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5 text-brand-primary" />
+            <h3 className="font-semibold text-gray-900">Rating Distribution</h3>
+          </div>
+          <div className="space-y-3">
+            {[5, 4, 3, 2, 1].map((rating) => (
+              <div key={rating} className="flex items-center gap-3">
+                <div className="flex items-center gap-1 w-16">
+                  <span className="text-sm font-medium text-gray-700">{rating}</span>
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                </div>
+                <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-brand-primary rounded-full transition-all duration-500"
+                    style={{ width: `${getRatingBarWidth(stats.ratingDistribution[rating])}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-600 w-12 text-right">
+                  {stats.ratingDistribution[rating]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Filters Row */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by user, product, or comment..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+              placeholder="Search user, product, comment..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
             />
           </div>
-          
-          {/* Status Filter Buttons */}
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant={statusFilter === "all" ? "default" : "outline"}
-              onClick={() => setStatusFilter("all")}
-              className={statusFilter === "all" ? "bg-linear-to-r from-amber-600 to-orange-600 text-white" : ""}
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all cursor-pointer"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="featured">Featured</option>
+          </select>
+
+          {/* Rating Filter */}
+          <select
+            value={ratingFilter}
+            onChange={(e) => { setRatingFilter(e.target.value); setPage(1); }}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all cursor-pointer"
+          >
+            <option value="all">All Ratings</option>
+            <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+            <option value="4">⭐⭐⭐⭐ (4)</option>
+            <option value="3">⭐⭐⭐ (3)</option>
+            <option value="2">⭐⭐ (2)</option>
+            <option value="1">⭐ (1)</option>
+          </select>
+
+          {/* Sort Order */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => { setSortBy('newest'); setPage(1); }}
+              className={`px-3 py-2 text-sm font-medium transition-all flex items-center gap-1 ${
+                sortBy === 'newest'
+                  ? 'bg-brand-primary text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <Filter className="w-4 h-4 mr-1" />
-              All Reviews
-            </Button>
-            <Button
-              variant={statusFilter === "pending" ? "default" : "outline"}
-              onClick={() => setStatusFilter("pending")}
-              className={statusFilter === "pending" ? "bg-linear-to-r from-yellow-600 to-amber-600 text-white" : ""}
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              Newest
+            </button>
+            <button
+              onClick={() => { setSortBy('oldest'); setPage(1); }}
+              className={`px-3 py-2 text-sm font-medium transition-all border-l border-gray-200 ${
+                sortBy === 'oldest'
+                  ? 'bg-brand-primary text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              Pending
-            </Button>
-            <Button
-              variant={statusFilter === "approved" ? "default" : "outline"}
-              onClick={() => setStatusFilter("approved")}
-              className={statusFilter === "approved" ? "bg-linear-to-r from-green-600 to-emerald-600 text-white" : ""}
+              Oldest
+            </button>
+            <button
+              onClick={() => { setSortBy('rating_high'); setPage(1); }}
+              className={`px-3 py-2 text-sm font-medium transition-all border-l border-gray-200 ${
+                sortBy === 'rating_high'
+                  ? 'bg-brand-primary text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              Approved
-            </Button>
+              Top Rated
+            </button>
+          </div>
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-1 transition-all"
+            >
+              <X className="w-4 h-4" />
+              Clear
+            </button>
+          )}
+
+          {/* Result Count */}
+          <div className="ml-auto text-sm text-gray-600">
+            <span className="font-bold text-brand-primary">{totalCount}</span> reviews found
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-xl border border-amber-100 p-12 text-center shadow-sm">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Loading reviews...</p>
         </div>
-      ) : filteredReviews.length === 0 ? (
-        <div className="bg-white rounded-xl border border-amber-100 p-12 text-center shadow-sm">
+      ) : reviews.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
           <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <p className="text-lg font-semibold text-gray-700">No reviews found</p>
           <p className="text-sm text-gray-500 mt-1">
-            {searchQuery ? 'Try adjusting your search criteria' : 'Reviews will appear here once customers submit them'}
+            {hasActiveFilters
+              ? 'Try adjusting your search or filters'
+              : 'Reviews will appear here once customers submit them'}
           </p>
         </div>
       ) : (
         <>
           {/* Reviews List */}
           <div className="space-y-4">
-            {filteredReviews.map(review => (
-              <div key={review._id} className="bg-white rounded-xl border-2 border-gray-200 hover:border-amber-300 hover:shadow-lg transition-all overflow-hidden">
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+            {reviews.map(review => (
+              <div key={review._id} className="bg-white rounded-xl border border-gray-200 hover:border-brand-primary hover:shadow-md transition-all overflow-hidden">
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-start gap-4 mb-3">
+                      <div className="flex items-start gap-4">
                         {/* User Avatar */}
-                        <div className="w-12 h-12 rounded-full bg-linear-to-br from-amber-100 to-yellow-100 flex items-center justify-center flex-shrink-0">
-                          <User className="w-6 h-6 text-amber-600" />
+                        <div className="w-11 h-11 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
+                          <User className="w-5 h-5 text-brand-primary" />
                         </div>
                         
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1">
+                            <h3 className="font-bold text-gray-900">
                               {review.user?.firstName} {review.user?.lastName}
                             </h3>
                             <div className="flex items-center gap-1">
                               {renderStars(review.rating)}
-                              <span className="ml-1 text-sm font-semibold text-gray-600">({review.rating})</span>
+                              <span className="ml-1 text-sm font-semibold text-gray-500">({review.rating})</span>
                             </div>
                           </div>
                           
-                          <p className="text-sm text-gray-600 flex items-center gap-2 mb-2">
+                          <p className="text-sm text-gray-500 flex items-center gap-1.5 mb-2">
                             <Package className="w-4 h-4" />
-                            {review.product?.name}
+                            <span className="truncate">{review.product?.name}</span>
                           </p>
                           
                           {review.title && (
-                            <p className="font-semibold text-gray-900 mb-1">{review.title}</p>
+                            <p className="font-semibold text-gray-800 mb-1">{review.title}</p>
                           )}
                           
-                          <p className="text-gray-700 text-sm leading-relaxed">{review.comment}</p>
+                          <p className="text-gray-600 text-sm leading-relaxed">{review.comment}</p>
                           
-                          <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {new Date(review.createdAt).toLocaleDateString('en-IN', { 
-                              day: 'numeric', 
-                              month: 'short', 
-                              year: 'numeric'
-                            })}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-3 mt-3">
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {new Date(review.createdAt).toLocaleDateString('en-IN', { 
+                                day: 'numeric', 
+                                month: 'short', 
+                                year: 'numeric'
+                              })}
+                            </span>
+                            
+                            {/* Status Badges */}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                              review.isApproved
+                                ? "bg-green-100 text-green-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}>
+                              {review.isApproved ? (
+                                <><CheckCircle className="w-3 h-3 mr-1" /> Approved</>
+                              ) : (
+                                <><Clock className="w-3 h-3 mr-1" /> Pending</>
+                              )}
+                            </span>
+                            {review.isFeatured && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">
+                                <Sparkles className="w-3 h-3 mr-1" /> Featured
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      
-                      {/* Status Badges */}
-                      <div className="flex gap-2 flex-wrap">
-                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border-2 ${
-                          review.isApproved
-                            ? "bg-green-100 text-green-700 border-green-200"
-                            : "bg-yellow-100 text-yellow-700 border-yellow-200"
-                        }`}>
-                          {review.isApproved ? (
-                            <><CheckCircle className="w-3.5 h-3.5 mr-1" /> Approved</>
-                          ) : (
-                            <><AlertTriangle className="w-3.5 h-3.5 mr-1" /> Pending</>
-                          )}
-                        </span>
-                        {review.isFeatured && (
-                          <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border-2 border-blue-200">
-                            <Sparkles className="w-3.5 h-3.5 mr-1" /> Featured
-                          </span>
-                        )}
                       </div>
                     </div>
                     
-                    {/* Three-dot menu */}
+                    {/* Actions Menu */}
                     <div className="relative" ref={openMenu === review._id ? menuRef : null}>
                       <button
                         onClick={() => setOpenMenu(openMenu === review._id ? null : review._id)}
                         className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       >
-                        <MoreVertical className="w-5 h-5 text-gray-600" />
+                        <MoreVertical className="w-5 h-5 text-gray-500" />
                       </button>
                       
                       {openMenu === review._id && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border-2 border-gray-200 py-2 z-10">
+                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-10">
                           {!review.isApproved && (
                             <button
                               onClick={() => {
                                 setConfirmModal({ show: true, action: 'approve', review });
                                 setOpenMenu(null);
                               }}
-                              className="w-full px-4 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-gray-700"
+                              className="w-full px-4 py-2 text-left hover:bg-green-50 flex items-center gap-2 text-sm text-gray-700"
                             >
                               <Check className="w-4 h-4 text-green-600" />
-                              Approve Review
+                              Approve
                             </button>
                           )}
                           <button
@@ -306,18 +446,12 @@ const Reviews = () => {
                               setConfirmModal({ show: true, action: 'featured', review });
                               setOpenMenu(null);
                             }}
-                            className="w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center gap-2 text-gray-700"
+                            className="w-full px-4 py-2 text-left hover:bg-purple-50 flex items-center gap-2 text-sm text-gray-700"
                           >
                             {review.isFeatured ? (
-                              <>
-                                <X className="w-4 h-4 text-blue-600" />
-                                Remove Featured
-                              </>
+                              <><X className="w-4 h-4 text-purple-600" /> Remove Featured</>
                             ) : (
-                              <>
-                                <Sparkles className="w-4 h-4 text-blue-600" />
-                                Mark as Featured
-                              </>
+                              <><Sparkles className="w-4 h-4 text-purple-600" /> Mark Featured</>
                             )}
                           </button>
                           <button
@@ -325,10 +459,10 @@ const Reviews = () => {
                               setConfirmModal({ show: true, action: 'delete', review });
                               setOpenMenu(null);
                             }}
-                            className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-2 text-red-600"
+                            className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center gap-2 text-sm text-red-600"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Delete Review
+                            Delete
                           </button>
                         </div>
                       )}
@@ -341,7 +475,7 @@ const Reviews = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="bg-white rounded-xl border border-amber-100 p-4 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-600">
                   Page <span className="font-bold text-gray-900">{page}</span> of <span className="font-bold text-gray-900">{totalPages}</span>
@@ -349,8 +483,9 @@ const Reviews = () => {
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
+                    size="sm"
                     disabled={page === 1}
-                    onClick={() => load(page - 1, statusFilter)}
+                    onClick={() => setPage(p => p - 1)}
                     className="flex items-center gap-1"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -358,8 +493,9 @@ const Reviews = () => {
                   </Button>
                   <Button
                     variant="outline"
+                    size="sm"
                     disabled={page === totalPages}
-                    onClick={() => load(page + 1, statusFilter)}
+                    onClick={() => setPage(p => p + 1)}
                     className="flex items-center gap-1"
                   >
                     Next
@@ -374,59 +510,47 @@ const Reviews = () => {
 
       {/* Confirmation Modal */}
       {confirmModal.show && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-amber-200">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
             <div className={`${
               confirmModal.action === 'delete' 
-                ? 'bg-linear-to-r from-red-50 to-rose-50 border-red-100' 
+                ? 'bg-red-50' 
                 : confirmModal.action === 'approve'
-                ? 'bg-linear-to-r from-green-50 to-emerald-50 border-green-100'
-                : 'bg-linear-to-r from-blue-50 to-cyan-50 border-blue-100'
-            } p-6 border-b`}>
-              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                ? 'bg-green-50'
+                : 'bg-purple-50'
+            } p-5 border-b`}>
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 {confirmModal.action === 'delete' ? (
-                  <>
-                    <Trash2 className="w-6 h-6 text-red-600" />
-                    Delete Review
-                  </>
+                  <><Trash2 className="w-5 h-5 text-red-600" /> Delete Review</>
                 ) : confirmModal.action === 'approve' ? (
-                  <>
-                    <Check className="w-6 h-6 text-green-600" />
-                    Approve Review
-                  </>
+                  <><Check className="w-5 h-5 text-green-600" /> Approve Review</>
                 ) : (
-                  <>
-                    <Sparkles className="w-6 h-6 text-blue-600" />
-                    {confirmModal.review?.isFeatured ? 'Remove from Featured' : 'Mark as Featured'}
-                  </>
+                  <><Sparkles className="w-5 h-5 text-purple-600" /> {confirmModal.review?.isFeatured ? 'Remove from Featured' : 'Mark as Featured'}</>
                 )}
               </h3>
             </div>
             
-            <div className="p-6">
-              <p className="text-gray-700 mb-4">
+            <div className="p-5">
+              <p className="text-gray-600 text-sm mb-4">
                 {confirmModal.action === 'delete' 
-                  ? 'Are you sure you want to permanently delete this review? This action cannot be undone.' 
+                  ? 'This review will be permanently deleted. This action cannot be undone.' 
                   : confirmModal.action === 'approve'
-                  ? 'Approve this review and make it visible to all customers?'
+                  ? 'This review will become visible to all customers.'
                   : confirmModal.review?.isFeatured
                   ? 'Remove this review from featured reviews?'
-                  : 'Mark this review as featured to highlight it on your store?'}
+                  : 'This review will be highlighted on your store.'}
               </p>
               
               <div className={`${
-                confirmModal.action === 'delete' ? 'bg-red-50 border-red-100' 
-                : confirmModal.action === 'approve' ? 'bg-green-50 border-green-100'
-                : 'bg-blue-50 border-blue-100'
-              } rounded-lg p-4 mb-6 border`}>
-                <p className="text-sm text-gray-600 mb-2">
-                  <span className="font-semibold text-gray-900">{confirmModal.review?.user?.firstName} {confirmModal.review?.user?.lastName}</span>
-                </p>
-                <div className="flex items-center gap-1 mb-2">
-                  {renderStars(confirmModal.review?.rating)}
+                confirmModal.action === 'delete' ? 'bg-red-50' 
+                : confirmModal.action === 'approve' ? 'bg-green-50'
+                : 'bg-purple-50'
+              } rounded-lg p-4 mb-5`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-semibold text-gray-900 text-sm">
+                    {confirmModal.review?.user?.firstName} {confirmModal.review?.user?.lastName}
+                  </span>
+                  <div className="flex">{renderStars(confirmModal.review?.rating, "w-3 h-3")}</div>
                 </div>
                 <p className="text-sm text-gray-700 line-clamp-2">{confirmModal.review?.comment}</p>
               </div>
@@ -434,7 +558,7 @@ const Reviews = () => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmModal({ show: false, action: null, review: null })}
-                  className="flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-all"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-all"
                 >
                   Cancel
                 </button>
@@ -446,11 +570,11 @@ const Reviews = () => {
                   }}
                   className={`flex-1 px-4 py-2.5 ${
                     confirmModal.action === 'delete'
-                      ? 'bg-linear-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700'
+                      ? 'bg-red-600 hover:bg-red-700'
                       : confirmModal.action === 'approve'
-                      ? 'bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-                      : 'bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'
-                  } text-white rounded-lg font-semibold transition-all shadow-sm`}
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-purple-600 hover:bg-purple-700'
+                  } text-white rounded-lg font-medium text-sm transition-all`}
                 >
                   Confirm
                 </button>
@@ -465,20 +589,20 @@ const Reviews = () => {
         <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-right">
           <div className={`${
             toast.type === 'success' 
-              ? 'bg-linear-to-r from-green-500 to-emerald-600' 
-              : 'bg-linear-to-r from-red-500 to-rose-600'
-          } text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px] border-2 border-white/20`}>
+              ? 'bg-green-600' 
+              : 'bg-red-600'
+          } text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 min-w-[280px]`}>
             {toast.type === 'success' ? (
-              <CheckCircle className="w-6 h-6 flex-shrink-0" />
+              <CheckCircle className="w-5 h-5 shrink-0" />
             ) : (
-              <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+              <AlertTriangle className="w-5 h-5 shrink-0" />
             )}
-            <p className="font-semibold">{toast.message}</p>
+            <p className="font-medium text-sm">{toast.message}</p>
             <button
               onClick={() => setToast({ show: false, message: '', type: 'error' })}
               className="ml-auto hover:bg-white/20 rounded-lg p-1 transition-colors"
             >
-              <XCircle className="w-5 h-5" />
+              <XCircle className="w-4 h-4" />
             </button>
           </div>
         </div>

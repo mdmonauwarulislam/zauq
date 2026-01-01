@@ -15,7 +15,6 @@ const Checkout = () => {
   const { items: cartItems, totalAmount } = useSelector((state) => state.cart);
 
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("upi");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discount, setDiscount] = useState(0);
@@ -76,11 +75,6 @@ const Checkout = () => {
       return;
     }
 
-    if (!paymentMethod) {
-      toast.error("Please select a payment method");
-      return;
-    }
-
     try {
       setLoading(true);
 
@@ -91,7 +85,7 @@ const Checkout = () => {
           price: item.price,
         })),
         shippingAddress: selectedAddress,
-        paymentMethod,
+        paymentMethod: "razorpay", // Only Razorpay payment is available
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
       };
 
@@ -275,39 +269,30 @@ const Checkout = () => {
                 <h2 className="text-xl font-semibold text-gray-900">Payment Method</h2>
               </div>
 
-              <div className="space-y-3">
-                {[
-                  { id: "upi", label: "UPI" },
-                  { id: "credit-card", label: "Credit Card" },
-                  { id: "debit-card", label: "Debit Card" },
-                  { id: "net-banking", label: "Net Banking" },
-                ].map((method) => (
-                  <div
-                    key={method.id}
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
-                      paymentMethod === method.id
-                        ? "border-brand-primary bg-brand-primary-light"
-                        : "border-gray-200 hover:border-brand-primary"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">{method.label}</span>
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          paymentMethod === method.id
-                            ? "border-brand-primary"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {paymentMethod === method.id && (
-                          <div className="w-3 h-3 rounded-full bg-brand-primary" />
-                        )}
-                      </div>
-                    </div>
+              <div className="border-2 rounded-xl p-4 border-brand-primary bg-brand-primary-light">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 58 32" className="w-10 h-6">
+                      <path fill="#072654" d="M20 0H4a4 4 0 00-4 4v24a4 4 0 004 4h16V0z"/>
+                      <path fill="#3395FF" d="M58 0H20v32h38V0z"/>
+                      <path fill="#fff" d="M42.5 16c0 3.3-2.7 6-6 6s-6-2.7-6-6 2.7-6 6-6 6 2.7 6 6z"/>
+                    </svg>
                   </div>
-                ))}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">Razorpay Secure Payment</h3>
+                    <p className="text-sm text-gray-600">Pay securely with UPI, Cards, Net Banking & more</p>
+                  </div>
+                  <div className="w-5 h-5 rounded-full border-2 border-brand-primary flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-brand-primary" />
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {['UPI', 'Credit Card', 'Debit Card', 'Net Banking', 'Wallet'].map((method) => (
+                    <span key={method} className="px-2 py-1 bg-white/60 rounded text-xs text-gray-700">{method}</span>
+                  ))}
+                </div>
               </div>
+              <p className="text-xs text-gray-500 mt-3">You'll be redirected to Razorpay's secure payment gateway to complete your payment.</p>
             </div>
           </div>
 
@@ -332,7 +317,7 @@ const Checkout = () => {
                         {item.product.name}
                       </h4>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                      <p className="text-sm font-semibold text-brand-primary">₹{item.price * item.quantity}</p>
+                      <p className="text-sm font-semibold text-brand-primary">₹{Math.round(item.price * item.quantity).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -379,17 +364,17 @@ const Checkout = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>₹{totalAmount.toFixed(2)}</span>
+                  <span>₹{Math.round(totalAmount).toLocaleString()}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Discount</span>
-                    <span>- ₹{discount.toFixed(2)}</span>
+                    <span>- ₹{Math.round(discount).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
                   <span>Total</span>
-                  <span>₹{finalAmount.toFixed(2)}</span>
+                  <span>₹{Math.round(finalAmount).toLocaleString()}</span>
                 </div>
               </div>
 

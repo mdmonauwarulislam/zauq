@@ -14,23 +14,24 @@ import {
   Calendar,
   TrendingUp,
   Camera,
-  Upload
+  Upload,
+  Eye
 } from "lucide-react";
 
 import AuthService from "@/services/AuthService";
 import OrderService from "@/services/orderService";
 import CloudinaryService from "@/services/cloudinaryService";
+import OrderDetailsModal from "@/components/OrderDetailsModal";
 import { setUser, logout } from "@/redux/slices/authSlice";
 import { fetchWishlist } from "@/redux/slices/wishlistSlice";
 import { useNavigate } from "react-router-dom";
 
-const UserProfile = () => {
+const UserProfile = ({ initialTab = "profile" }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user: authUser } = useSelector((state) => state.auth);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",
@@ -57,6 +58,7 @@ const UserProfile = () => {
   const [savingAddress, setSavingAddress] = useState(false);
 
   const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -69,6 +71,11 @@ const UserProfile = () => {
     { id: "wishlist", label: "Wishlist", icon: Heart },
     { id: "settings", label: "Settings", icon: Settings },
   ];
+
+  // Update active tab when initialTab prop changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   // Fetch profile, orders, and wishlist
   useEffect(() => {
@@ -96,7 +103,10 @@ const UserProfile = () => {
           dispatch(setUser(userData));
         }
 
-        setOrders(ordersRes?.data?.orders || []);
+        // Only show paid orders
+        const allOrders = ordersRes?.data?.orders || [];
+        const paidOrders = allOrders.filter(order => order.paymentStatus === 'completed');
+        setOrders(paidOrders);
         dispatch(fetchWishlist());
       } catch (error) {
         console.error("Profile fetch error:", error);
@@ -334,7 +344,7 @@ const UserProfile = () => {
                   value={profile.firstName}
                   onChange={handleChange}
                   className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all"
-                  placeholder="Ayesha"
+                  placeholder="Saiful"
                 />
               </div>
               <div>
@@ -348,7 +358,7 @@ const UserProfile = () => {
                   value={profile.lastName}
                   onChange={handleChange}
                   className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all"
-                  placeholder="Khan"
+                  placeholder="Islam"
                 />
               </div>
             </div>
@@ -405,7 +415,8 @@ const UserProfile = () => {
             {orders.map((order) => (
               <div
                 key={order._id}
-                className="border-2 border-gray-200 rounded-xl p-4 hover:border-brand-primary hover:shadow-md transition-all"
+                onClick={() => setSelectedOrder(order)}
+                className="border-2 border-gray-200 rounded-xl p-4 hover:border-brand-primary hover:shadow-md transition-all cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -434,13 +445,16 @@ const UserProfile = () => {
                     </div>
                   </div>
                   
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-brand-primary">
-                      ₹{order.finalPrice?.toFixed(2) || order.finalPrice}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-brand-primary">
+                        ₹{Math.round(order.finalPrice || 0).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {order.paymentStatus || "pending"}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {order.paymentStatus || "pending"}
-                    </div>
+                    <Eye className="w-5 h-5 text-gray-400" />
                   </div>
                 </div>
               </div>
@@ -448,6 +462,13 @@ const UserProfile = () => {
           </div>
         )}
       </div>
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        order={selectedOrder}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+      />
     </div>
   );
 

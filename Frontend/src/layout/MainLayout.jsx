@@ -30,6 +30,11 @@ const MainLayout = () => {
         <Route path="/products" element={<Product />} />
         <Route path="/products/:id" element={<ProductDetails />} />
         <Route path="/profile" element={<UserProfile/>} />
+        {/* Account routes - relative paths for nested routing from /account/* */}
+        <Route path="profile" element={<UserProfile initialTab="profile" />} />
+        <Route path="orders" element={<UserProfile initialTab="orders" />} />
+        <Route path="address" element={<UserProfile initialTab="address" />} />
+        <Route path="wishlist" element={<UserProfile initialTab="wishlist" />} />
         <Route path="/deals" element={<Deals/>} />
         <Route path="/checkout" element={<Checkout/>} />
       </Routes>

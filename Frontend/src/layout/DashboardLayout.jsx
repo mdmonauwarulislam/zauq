@@ -10,6 +10,7 @@ import Coupons from "../Views/Dashboard/Coupons";
 import Orders from "../Views/Dashboard/Orders";
 import Users from "../Views/Dashboard/Users";
 import Reviews from "../Views/Dashboard/Reviews";
+import Wishlist from "../Views/Dashboard/Wishlist";
 
 const DashboardLayout = () => {
   return (
@@ -27,6 +28,7 @@ const DashboardLayout = () => {
           <Route path="/orders" element={<Orders />} />
           <Route path="/users" element={<Users />} />
           <Route path="/reviews" element={<Reviews />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="*" element={<Dashboard />} />
         </Routes>
       </div>

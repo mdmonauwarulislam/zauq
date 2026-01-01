@@ -228,14 +228,26 @@ export const changePassword = asyncHandler(async (req, res) => {
  * @desc    Get all users (admin)
  * @route   GET /api/auth/users
  * @access  Private/Admin
+ * 
+ * Query:
+ *  - page?: number
+ *  - limit?: number
+ *  - search?: string (name or email)
+ *  - role?: string (user, admin)
+ *  - status?: string (active, blocked)
+ *  - sort?: string (field name, prefix with - for descending)
  */
 export const getAllUsers = asyncHandler(async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
   const search = req.query.search?.trim() || "";
+  const role = req.query.role?.trim() || "";
+  const status = req.query.status?.trim() || "";
+  const sort = req.query.sort || "-createdAt";
 
   const filter = {};
 
+  // Search by name or email
   if (search) {
     filter.$or = [
       { firstName: { $regex: search, $options: "i" } },
@@ -244,14 +256,37 @@ export const getAllUsers = asyncHandler(async (req, res) => {
     ];
   }
 
+  // Role filter
+  if (role && ["user", "admin"].includes(role)) {
+    filter.role = role;
+  }
+
+  // Status filter (active = not blocked, blocked = isBlocked true)
+  if (status === "active") {
+    filter.isBlocked = false;
+  } else if (status === "blocked") {
+    filter.isBlocked = true;
+  }
+
   const skip = (page - 1) * limit;
 
-  const [users, total] = await Promise.all([
+  // Build sort object
+  let sortObj = { createdAt: -1 };
+  if (sort) {
+    const sortField = sort.startsWith("-") ? sort.substring(1) : sort;
+    const sortOrder = sort.startsWith("-") ? -1 : 1;
+    sortObj = { [sortField]: sortOrder };
+  }
+
+  const [users, total, totalActive, totalBlocked, totalAdmins] = await Promise.all([
     User.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortObj)
       .skip(skip)
       .limit(limit),
     User.countDocuments(filter),
+    User.countDocuments({ isBlocked: false }),
+    User.countDocuments({ isBlocked: true }),
+    User.countDocuments({ role: "admin" }),
   ]);
 
   return res.status(200).json({
@@ -263,6 +298,12 @@ export const getAllUsers = asyncHandler(async (req, res) => {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    },
+    stats: {
+      total: totalActive + totalBlocked,
+      active: totalActive,
+      blocked: totalBlocked,
+      admins: totalAdmins,
     },
   });
 });

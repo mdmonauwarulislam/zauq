@@ -83,23 +83,22 @@ const couponSchema = new Schema(
 /**
  * Validate that expiryDate > startDate
  */
-couponSchema.pre("save", function (next) {
+couponSchema.pre("save", function () {
   if (this.expiryDate <= this.startDate) {
-    return next(
+    return (
       new Error("Expiry date must be later than start date")
     );
   }
-  next();
+
 });
 
 /**
  * Automatically uppercase coupon codes even if updated.
  */
-couponSchema.pre("save", function (next) {
+couponSchema.pre("save", function () {
   if (this.isModified("code")) {
     this.code = this.code.trim().toUpperCase();
   }
-  next();
 });
 
 /**

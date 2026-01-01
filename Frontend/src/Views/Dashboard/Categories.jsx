@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import CategoryService from "@/services/categoryService";
+import ProductService from "@/services/productService";
 import CloudinaryService from "@/services/cloudinaryService";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Edit,
@@ -18,6 +20,10 @@ import {
   ArrowUpDown,
   AlertTriangle,
   MoreVertical,
+  ArrowLeft,
+  Package,
+  Eye,
+  ShoppingBag,
 } from "lucide-react";
 
 const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
@@ -71,7 +77,7 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
   return (
     <form onSubmit={submit} className="space-y-5">
       {/* Basic Info Section */}
-      <div className="bg-linear-to-r from-blue-50 to-purple-50 rounded-xl p-5 border border-blue-100">
+      <div className="bg-brand-text-primary rounded-xl p-5 border border-brand-primary">
         <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
           <Folder className="w-4 h-4 text-blue-600" />
           Basic Information
@@ -106,7 +112,7 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
       </div>
 
       {/* Images Section */}
-      <div className="bg-linear-to-r from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-100">
+      <div className="bg-orange-50 rounded-xl p-5 border border-orange-100">
         <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
           <ImageIcon className="w-4 h-4 text-orange-600" />
           Category Images (Max 2)
@@ -160,7 +166,7 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
       </div>
 
       {/* Settings Section */}
-      <div className="bg-linear-to-r from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100">
+      <div className="bg-purple-50 rounded-xl p-5 border border-purple-100">
         <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-purple-600" />
           Category Settings
@@ -206,7 +212,7 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
         </Button>
         <Button
           type="submit"
-          className="px-6 py-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold cursor-pointer"
+          className="px-6 py-2 bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold cursor-pointer"
         >
           Save Category
         </Button>
@@ -216,16 +222,23 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
 };
 
 const Categories = () => {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
   const [showNew, setShowNew] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("grid"); 
-  const [deleteConfirm, setDeleteConfirm] = useState(null); 
-  const [openMenu, setOpenMenu] = useState(null); 
+  const [viewMode, setViewMode] = useState("grid");
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [openMenu, setOpenMenu] = useState(null);
   const menuRef = useRef(null);
+
+  // Category Products View State
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categoryProducts, setCategoryProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -260,6 +273,34 @@ const Categories = () => {
       c.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Load products when category is selected
+  const handleCategoryClick = async (category) => {
+    setSelectedCategory(category);
+    setProductsLoading(true);
+    setProductSearchTerm("");
+    try {
+      const res = await ProductService.getProducts({ category: category._id });
+      setCategoryProducts(res.data?.products || []);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+      setCategoryProducts([]);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const handleBackToCategories = () => {
+    setSelectedCategory(null);
+    setCategoryProducts([]);
+    setProductSearchTerm("");
+  };
+
+  const filteredProducts = categoryProducts.filter(
+    (p) =>
+      p.name?.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+      p.description?.toLowerCase().includes(productSearchTerm.toLowerCase())
+  );
+
   const handleCreate = async (payload) => {
     try {
       await CategoryService.createCategory(payload);
@@ -290,22 +331,190 @@ const Categories = () => {
     }
   };
 
+  // Products List View for Selected Category
+  if (selectedCategory) {
+    return (
+      <div className="p-6 w-full bg-gray-50 min-h-screen">
+        {/* Header with Back Button */}
+        <div className="rounded-xl border border-brand-primary bg-white p-6 mb-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleBackToCategories}
+                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="flex items-center gap-3">
+                {selectedCategory.images?.[0] ? (
+                  <img
+                    src={selectedCategory.images[0]}
+                    alt={selectedCategory.name}
+                    className="w-12 h-12 rounded-lg object-cover border-2 border-brand-primary"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-brand-primary/10 flex items-center justify-center">
+                    <Folder className="w-6 h-6 text-brand-primary" />
+                  </div>
+                )}
+                <div>
+                  <h1 className="text-2xl font-bold text-brand-primary">
+                    {selectedCategory.name}
+                  </h1>
+                  <p className="text-gray-600 text-sm">
+                    {categoryProducts.length} Products in this category
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
+          <div className="relative flex-1 w-full md:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={productSearchTerm}
+              onChange={(e) => setProductSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 outline-none border border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {productsLoading && (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-primary border-t-transparent mx-auto mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading products...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!productsLoading && filteredProducts.length === 0 && (
+          <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              {productSearchTerm ? "No products found" : "No products in this category"}
+            </h3>
+            <p className="text-gray-600">
+              {productSearchTerm
+                ? "Try adjusting your search terms"
+                : "Add products to this category from the Products section"}
+            </p>
+          </div>
+        )}
+
+        {/* Products List */}
+        {!productsLoading && filteredProducts.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 font-semibold text-sm text-gray-700">
+              <div className="col-span-1">#</div>
+              <div className="col-span-2">Image</div>
+              <div className="col-span-3">Product Name</div>
+              <div className="col-span-2">Price</div>
+              <div className="col-span-2">Stock</div>
+              <div className="col-span-2 text-right">Actions</div>
+            </div>
+
+            {/* Product Rows */}
+            {filteredProducts.map((product, index) => (
+              <div
+                key={product._id}
+                className="grid grid-cols-12 gap-4 p-4 items-center border-b border-gray-100 hover:bg-gray-50 transition-colors"
+              >
+                <div className="col-span-1 text-gray-500 font-medium">
+                  {index + 1}
+                </div>
+                <div className="col-span-2">
+                  {product.images?.[0] ? (
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="w-14 h-14 rounded-lg object-cover border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <ShoppingBag className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <div className="col-span-3">
+                  <p className="font-semibold text-gray-900 line-clamp-1">
+                    {product.name}
+                  </p>
+                  <p className="text-sm text-gray-500 line-clamp-1">
+                    {product.description || "No description"}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="font-bold text-brand-primary">
+                    Rs. {product.price?.toLocaleString()}
+                  </p>
+                  {product.compareAtPrice > product.price && (
+                    <p className="text-sm text-gray-400 line-through">
+                      Rs. {product.compareAtPrice?.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <div className="col-span-2">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      product.stock > 10
+                        ? "bg-green-100 text-green-700"
+                        : product.stock > 0
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+                  </span>
+                </div>
+                <div className="col-span-2 flex justify-end gap-2">
+                  <button
+                    onClick={() => navigate(`/dashboard/products?edit=${product._id}`)}
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-colors cursor-pointer"
+                    title="Edit Product"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => navigate(`/dashboard/products?view=${product._id}`)}
+                    className="p-2 rounded-lg border border-gray-200 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-colors cursor-pointer"
+                    title="View Product"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 w-full bg-linear-to-br from-gray-50 to-blue-50/30 min-h-screen">
+    <div className="p-6 w-full bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="bg-linear-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100 p-6 mb-6 shadow-sm">
+      <div className="rounded-xl border border-brand-primary bg-white p-6 mb-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent mb-2">
+            <h1 className="text-3xl font-bold text-brand-primary mb-2">
               Category Management
             </h1>
             <p className="text-gray-600 text-sm">
-              Organize your products with categories
+              Organize your products with categories • Click on a category to view its products
             </p>
           </div>
           <Button
             onClick={() => setShowNew(true)}
-            className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-5 py-2 cursor-pointer shadow-sm"
+            className="flex items-center gap-2 bg-brand-primary text-white hover:bg-brand-primary/90 font-semibold px-5 py-2 cursor-pointer shadow-sm"
           >
             <Plus className="w-4 h-4" />
             New Category
@@ -313,17 +522,17 @@ const Categories = () => {
         </div>
       </div>
 
-      {/* Search and Filter Bar */}
+      {/* Search Bar */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
         <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           <div className="relative flex-1 w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search categories by name or description..."
+              placeholder="Search categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 outline-none border border-brand-primary rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-all"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -336,7 +545,7 @@ const Categories = () => {
               onClick={() => setViewMode("grid")}
               className={`p-2 rounded-lg transition-all cursor-pointer ${
                 viewMode === "grid"
-                  ? "bg-blue-100 text-blue-600"
+                  ? "bg-brand-primary text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -346,7 +555,7 @@ const Categories = () => {
               onClick={() => setViewMode("list")}
               className={`p-2 rounded-lg transition-all cursor-pointer ${
                 viewMode === "list"
-                  ? "bg-blue-100 text-blue-600"
+                  ? "bg-brand-primary text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -368,7 +577,7 @@ const Categories = () => {
       {loading && (
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-primary border-t-transparent mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading categories...</p>
           </div>
         </div>
@@ -389,7 +598,7 @@ const Categories = () => {
           {!searchTerm && (
             <Button
               onClick={() => setShowNew(true)}
-              className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-2 cursor-pointer"
+              className="bg-brand-primary text-white px-6 py-2 cursor-pointer"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Your First Category
@@ -398,18 +607,20 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Categories Grid View */}
+      {/* Categories Grid */}
       {!loading && filteredCategories.length > 0 && viewMode === "grid" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredCategories.map((c) => (
             <div
               key={c._id}
-              className="group bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300 overflow-hidden relative"
+              className="group bg-white rounded-2xl border-2 border-gray-200 hover:border-brand-primary hover:shadow-xl transition-all duration-300 overflow-hidden relative cursor-pointer"
+              onClick={() => handleCategoryClick(c)}
             >
-              {/* Three Dot Menu - Top Right Corner */}
+              {/* Three Dot Menu */}
               <div
                 className="absolute top-3 right-3 z-20"
                 ref={openMenu === c._id ? menuRef : null}
+                onClick={(e) => e.stopPropagation()}
               >
                 <button
                   onClick={() => setOpenMenu(openMenu === c._id ? null : c._id)}
@@ -418,7 +629,6 @@ const Categories = () => {
                   <MoreVertical className="w-4 h-4" />
                 </button>
 
-                {/* Dropdown Menu */}
                 {openMenu === c._id && (
                   <div className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <button
@@ -426,7 +636,7 @@ const Categories = () => {
                         setEditing(c);
                         setOpenMenu(null);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition-colors text-left border-b border-gray-100"
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-brand-primary/10 text-gray-700 hover:text-brand-primary transition-colors text-left border-b border-gray-100"
                     >
                       <Edit className="w-3.5 h-3.5" />
                       <span className="font-medium text-sm">Edit</span>
@@ -446,7 +656,7 @@ const Categories = () => {
               </div>
 
               {/* Category Image */}
-              <div className="relative h-48 bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden">
+              <div className="relative h-40 bg-gray-100 overflow-hidden">
                 {c.images?.[0] ? (
                   <img
                     src={c.images[0]}
@@ -455,43 +665,36 @@ const Categories = () => {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Folder className="w-20 h-20 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-400 font-medium">
-                        No Image
-                      </p>
-                    </div>
+                    <Folder className="w-16 h-16 text-gray-300" />
                   </div>
                 )}
-                {/* Overlay gradient on hover */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Featured Badge */}
                 {c.isFeatured && (
-                  <div className="absolute top-3 right-3 bg-linear-to-r from-yellow-400 to-orange-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5 animate-in slide-in-from-top">
-                    <Star className="w-3.5 h-3.5 fill-white" />
+                  <div className="absolute top-3 left-3 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-white" />
                     Featured
                   </div>
                 )}
-
-                {/* Display Order Badge */}
-                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-700 px-2.5 py-1 rounded-lg text-xs font-bold shadow-md flex items-center gap-1">
-                  <ArrowUpDown className="w-3 h-3" />
-                  {c.displayOrder}
-                </div>
               </div>
 
               {/* Category Info */}
-              <div className="p-5 pb-1">
-                {/* Category Name */}
-                <h3 className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+              <div className="p-4">
+                <h3 className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-brand-primary transition-colors mb-1">
                   {c.name}
                 </h3>
-
-                {/* Category Description */}
-                <p className="text-sm text-gray-600 mb-0 line-clamp-2 min-h-10">
-                  {c.description || "No description available"}
+                <p className="text-sm text-gray-500 line-clamp-1">
+                  {c.description || "No description"}
                 </p>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-400">
+                    Order: {c.displayOrder}
+                  </span>
+                  <span className="text-xs font-semibold text-brand-primary flex items-center gap-1">
+                    View Products
+                    <ArrowLeft className="w-3 h-3 rotate-180" />
+                  </span>
+                </div>
               </div>
             </div>
           ))}
@@ -504,12 +707,14 @@ const Categories = () => {
           {filteredCategories.map((c) => (
             <div
               key={c._id}
-              className="group bg-white rounded-2xl border-2 border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all p-4 relative"
+              className="group bg-white rounded-2xl border-2 border-gray-200 hover:border-brand-primary hover:shadow-lg transition-all p-4 relative cursor-pointer"
+              onClick={() => handleCategoryClick(c)}
             >
-              {/* Three Dot Menu - Top Right Corner */}
+              {/* Three Dot Menu */}
               <div
                 className="absolute top-4 right-4 z-20"
                 ref={openMenu === c._id ? menuRef : null}
+                onClick={(e) => e.stopPropagation()}
               >
                 <button
                   onClick={() => setOpenMenu(openMenu === c._id ? null : c._id)}
@@ -518,7 +723,6 @@ const Categories = () => {
                   <MoreVertical className="w-4 h-4" />
                 </button>
 
-                {/* Dropdown Menu */}
                 {openMenu === c._id && (
                   <div className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <button
@@ -526,7 +730,7 @@ const Categories = () => {
                         setEditing(c);
                         setOpenMenu(null);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition-colors text-left border-b border-gray-100"
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-brand-primary/10 text-gray-700 hover:text-brand-primary transition-colors text-left border-b border-gray-100"
                     >
                       <Edit className="w-3.5 h-3.5" />
                       <span className="font-medium text-sm">Edit</span>
@@ -547,7 +751,7 @@ const Categories = () => {
 
               <div className="flex items-center gap-5">
                 {/* Category Image */}
-                <div className="relative w-32 h-32 bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 rounded-xl overflow-hidden shrink-0 shadow-md">
+                <div className="relative w-24 h-24 bg-gray-100 rounded-xl overflow-hidden shrink-0 shadow-md">
                   {c.images?.[0] ? (
                     <img
                       src={c.images[0]}
@@ -556,47 +760,38 @@ const Categories = () => {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full">
-                      <Folder className="w-12 h-12 text-gray-300" />
+                      <Folder className="w-10 h-10 text-gray-300" />
                     </div>
                   )}
-                  {/* Display Order Badge */}
-                  <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 px-2 py-1 rounded-lg text-xs font-bold shadow-md flex items-center gap-1">
-                    <ArrowUpDown className="w-3 h-3" />
-                    {c.displayOrder}
-                  </div>
                 </div>
 
                 {/* Category Details */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      {/* Category Name with Featured Badge */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-bold text-xl text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {c.name}
-                        </h3>
-                        {c.isFeatured && (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-linear-to-r from-yellow-400 to-orange-500 text-white shadow-sm">
-                            <Star className="w-3 h-3 fill-white" />
-                            Featured
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Category Description */}
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-                        {c.description || "No description available"}
-                      </p>
-
-                      {/* Image Count */}
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700">
-                          <ImageIcon className="w-3.5 h-3.5" />
-                          {c.images?.length || 0}{" "}
-                          {c.images?.length === 1 ? "Image" : "Images"}
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-xl text-gray-900 group-hover:text-brand-primary transition-colors">
+                      {c.name}
+                    </h3>
+                    {c.isFeatured && (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-500 text-white">
+                        <Star className="w-3 h-3 fill-white" />
+                        Featured
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-1">
+                    {c.description || "No description"}
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs font-medium text-gray-400">
+                      Order: {c.displayOrder}
+                    </span>
+                    <span className="text-xs font-medium text-gray-400">
+                      {c.images?.length || 0} {c.images?.length === 1 ? "Image" : "Images"}
+                    </span>
+                    <span className="text-xs font-semibold text-brand-primary flex items-center gap-1">
+                      View Products
+                      <ArrowLeft className="w-3 h-3 rotate-180" />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -609,7 +804,7 @@ const Categories = () => {
       {showNew && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4 overflow-y-auto" style={{scrollbarWidth:'none'}}>
           <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto" style={{scrollbarWidth:'none'}}>
-            <div className="sticky top-0 bg-linear-to-r from-blue-50 to-purple-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl">
+            <div className="sticky top-0 bg-blue-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-3">
                 <div className="bg-blue-100 p-2 rounded-lg">
                   <Plus className="w-6 h-6 text-blue-600" />
@@ -639,7 +834,7 @@ const Categories = () => {
       {editing && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4 overflow-y-auto" style={{scrollbarWidth:'none'}}>
           <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto" style={{scrollbarWidth:'none'}}>
-            <div className="sticky top-0 bg-linear-to-r from-green-50 to-emerald-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl">
+            <div className="sticky top-0 bg-green-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-3">
                 <div className="bg-green-100 p-2 rounded-lg">
                   <Edit className="w-6 h-6 text-green-600" />
@@ -692,7 +887,7 @@ const Categories = () => {
 
               {/* Category Preview */}
               <div className="bg-gray-50 rounded-lg p-3 mb-6 flex items-center gap-3">
-                <div className="w-12 h-12 bg-linear-to-br from-gray-200 to-gray-300 rounded-lg overflow-hidden shrink-0">
+                <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden shrink-0">
                   {deleteConfirm.images?.[0] ? (
                     <img
                       src={deleteConfirm.images[0]}
@@ -725,7 +920,7 @@ const Categories = () => {
                 </Button>
                 <Button
                   onClick={() => handleDelete(deleteConfirm._id)}
-                  className="flex-1 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold cursor-pointer shadow-sm py-2.5 flex items-center justify-center gap-2"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold cursor-pointer shadow-sm py-2.5 flex items-center justify-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Category

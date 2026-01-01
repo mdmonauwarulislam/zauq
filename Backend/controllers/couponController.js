@@ -19,7 +19,10 @@ export const createCoupon = asyncHandler(async (req, res) => {
     throw new ErrorHandler("Coupon code already exists", 400);
   }
 
-  const coupon = await Coupon.create(req.body);
+  const coupon = await Coupon.create({
+    ...req.body,
+    code: code.trim().toUpperCase(),
+  });
 
   return res.status(201).json({
     success: true,
@@ -29,17 +32,102 @@ export const createCoupon = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Get all coupons
+ * @desc    Get all coupons with stats
  * @route   GET /api/coupons
  * @access  Private/Admin
  */
 export const getAllCoupons = asyncHandler(async (req, res) => {
-  const coupons = await Coupon.find().sort({ createdAt: -1 });
+  const { status, search, sort } = req.query;
+  
+  let filter = {};
+  const now = new Date();
+  
+  // Status filter
+  if (status === 'active') {
+    filter.isActive = true;
+    filter.expiryDate = { $gt: now };
+    filter.startDate = { $lte: now };
+  } else if (status === 'expired') {
+    filter.expiryDate = { $lt: now };
+  } else if (status === 'upcoming') {
+    filter.startDate = { $gt: now };
+  } else if (status === 'inactive') {
+    filter.isActive = false;
+  }
+  
+  // Search filter
+  if (search) {
+    filter.code = { $regex: search, $options: 'i' };
+  }
+  
+  // Sorting
+  let sortObj = { createdAt: -1 };
+  if (sort === 'oldest') sortObj = { createdAt: 1 };
+  else if (sort === 'expiry_asc') sortObj = { expiryDate: 1 };
+  else if (sort === 'expiry_desc') sortObj = { expiryDate: -1 };
+  else if (sort === 'discount_high') sortObj = { discount: -1 };
+  else if (sort === 'discount_low') sortObj = { discount: 1 };
+  else if (sort === 'usage_high') sortObj = { usedCount: -1 };
+  
+  const coupons = await Coupon.find(filter).sort(sortObj);
+  
+  // Calculate stats
+  const allCoupons = await Coupon.find();
+  const stats = {
+    total: allCoupons.length,
+    active: allCoupons.filter(c => c.isActive && c.expiryDate > now && c.startDate <= now).length,
+    expired: allCoupons.filter(c => c.expiryDate < now).length,
+    upcoming: allCoupons.filter(c => c.startDate > now).length,
+    inactive: allCoupons.filter(c => !c.isActive).length,
+    totalUsage: allCoupons.reduce((sum, c) => sum + (c.usedCount || 0), 0),
+  };
 
   return res.status(200).json({
     success: true,
     message: RESPONSE_MESSAGES.SUCCESS,
     coupons,
+    stats,
+  });
+});
+
+/**
+ * @desc    Get single coupon
+ * @route   GET /api/coupons/:id
+ * @access  Private/Admin
+ */
+export const getCouponById = asyncHandler(async (req, res) => {
+  const coupon = await Coupon.findById(req.params.id);
+
+  if (!coupon) {
+    throw new ErrorHandler("Coupon not found", 404);
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: RESPONSE_MESSAGES.SUCCESS,
+    coupon,
+  });
+});
+
+/**
+ * @desc    Toggle coupon active status
+ * @route   PUT /api/coupons/:id/toggle
+ * @access  Private/Admin
+ */
+export const toggleCouponStatus = asyncHandler(async (req, res) => {
+  const coupon = await Coupon.findById(req.params.id);
+
+  if (!coupon) {
+    throw new ErrorHandler("Coupon not found", 404);
+  }
+
+  coupon.isActive = !coupon.isActive;
+  await coupon.save();
+
+  return res.status(200).json({
+    success: true,
+    message: `Coupon ${coupon.isActive ? 'activated' : 'deactivated'} successfully`,
+    coupon,
   });
 });
 

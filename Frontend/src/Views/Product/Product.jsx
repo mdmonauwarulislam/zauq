@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductService from '@/services/productService';
@@ -14,7 +15,7 @@ import {
 import toast from 'react-hot-toast';
 
 const Product = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, _setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -131,7 +132,7 @@ const Product = () => {
       }));
 
     suggestions.push(...matchingCategories, ...matchingBrands);
-    setSearchSuggestions(suggestions.slice(0, 6)); // Max 6 total
+    setSearchSuggestions(suggestions.slice(0, 6));
   };
 
   // Debounced search effect - separate concerns
@@ -967,7 +968,7 @@ const Product = () => {
                 </button>
                 <button
                   onClick={() => setShowFilters(false)}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+                  className="flex-1 px-6 py-3 bg-brand-primary text-white rounded-lg font-medium hover:shadow-lg transition"
                 >
                   Apply Filters
                 </button>

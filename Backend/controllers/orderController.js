@@ -21,11 +21,13 @@ import {
  * Body:
  *  - items: [{ product, quantity, size?, color? }]
  *  - shippingAddress: { name, phone, address, city, state, postalCode, country }
- *  - paymentMethod: "credit-card" | "debit-card" | "upi" | "net-banking" | "wallet"
+ *  - paymentMethod: "razorpay" (only online payment via Razorpay)
  *  - couponCode?: string
  */
 export const createOrder = asyncHandler(async (req, res) => {
-  const { items, shippingAddress, paymentMethod, couponCode } = req.body;
+  const { items, shippingAddress, couponCode } = req.body;
+  // Payment method is always razorpay since only online payment is available
+  const paymentMethod = "razorpay";
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     throw new ErrorHandler("No items in order", 400);
@@ -241,26 +243,78 @@ export const getOrderById = asyncHandler(async (req, res) => {
  *
  * Query:
  *  - status?: string
+ *  - paymentStatus?: string
+ *  - startDate?: string (ISO date)
+ *  - endDate?: string (ISO date)
+ *  - sort?: string (field name, prefix with - for descending)
  *  - page?: number
  *  - limit?: number
  */
 export const getAllOrders = asyncHandler(async (req, res) => {
-  const { status, page = DEFAULT_PAGE, limit = PAGINATION_LIMIT } = req.query;
+  const { 
+    status, 
+    paymentStatus,
+    startDate,
+    endDate,
+    sort = "-createdAt",
+    page = DEFAULT_PAGE, 
+    limit = PAGINATION_LIMIT 
+  } = req.query;
 
   const query = {};
+  
+  // Status filter
   if (status && Object.values(ORDER_STATUS).includes(status)) {
     query.status = status;
+  }
+  
+  // Payment status filter (convert frontend value to backend constant)
+  if (paymentStatus) {
+    const paymentStatusMap = {
+      'Paid': PAYMENT_STATUS.COMPLETED,
+      'Pending': PAYMENT_STATUS.PENDING,
+      'Failed': PAYMENT_STATUS.FAILED,
+      'completed': PAYMENT_STATUS.COMPLETED,
+      'pending': PAYMENT_STATUS.PENDING,
+      'failed': PAYMENT_STATUS.FAILED,
+    };
+    const mappedStatus = paymentStatusMap[paymentStatus];
+    if (mappedStatus && Object.values(PAYMENT_STATUS).includes(mappedStatus)) {
+      query.paymentStatus = mappedStatus;
+    }
+  }
+  
+  // Date range filter
+  if (startDate || endDate) {
+    query.createdAt = {};
+    if (startDate) {
+      query.createdAt.$gte = new Date(startDate);
+    }
+    if (endDate) {
+      // Set to end of day
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      query.createdAt.$lte = endDateTime;
+    }
   }
 
   const pageNum = Number(page) || DEFAULT_PAGE;
   const limitNum = Number(limit) || PAGINATION_LIMIT;
   const skip = (pageNum - 1) * limitNum;
+  
+  // Build sort object
+  let sortObj = { createdAt: -1 }; // default
+  if (sort) {
+    const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+    const sortOrder = sort.startsWith('-') ? -1 : 1;
+    sortObj = { [sortField]: sortOrder };
+  }
 
   const [orders, total] = await Promise.all([
     Order.find(query)
       .populate("user", "firstName lastName email")
       .populate("items.product")
-      .sort({ createdAt: -1 })
+      .sort(sortObj)
       .skip(skip)
       .limit(limitNum),
     Order.countDocuments(query),
@@ -273,6 +327,12 @@ export const getAllOrders = asyncHandler(async (req, res) => {
     total,
     page: pageNum,
     pages: Math.ceil(total / limitNum),
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+      totalOrders: total,
+    },
   });
 });
 

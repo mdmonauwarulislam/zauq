@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   Search,
   Star,
@@ -201,16 +202,71 @@ const UserMenuDesktop = ({ user, onLogout }) => {
 
 // --- Search Overlay Modal ---
 const SearchOverlay = ({ isOpen, onClose }) => {
-  const popularSearches = ["Women", "Men", "Shorts", "Dress", "Jacket"];
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const overlayRef = useRef(null);
+  const inputRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") onClose();
     };
-    if (isOpen) document.addEventListener("keydown", handleEscape);
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      // Focus input when opened
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
+
+  // Reset search when closed
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  }, [isOpen]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/products?search=${encodeURIComponent(searchQuery)}&limit=6`
+        );
+        const data = await response.json();
+        setSearchResults(data.products || []);
+      } catch (error) {
+        console.error("Search error:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      onClose();
+    }
+  };
+
+  const handleProductClick = (productId) => {
+    navigate(`/products/${productId}`);
+    onClose();
+  };
 
   return (
     <div
@@ -225,41 +281,95 @@ const SearchOverlay = ({ isOpen, onClose }) => {
           isOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        <div className="w-full py-6 px-4 border-b border-gray-200">
-          <div className="w-full px-6 mx-auto lg:px-8 py-2 mt-10 sm:mt-0 flex rounded-full border items-center shadow-md relative">
-            <input
-              type="text"
-              placeholder="Enter Your Keywords"
-              className="grow h-full text-xl outline-none placeholder-gray-400 rounded-full font-normal pl-2"
-              autoFocus
-              style={{ background: "transparent" }}
-            />
-            <button className="h-14 w-14 cursor-pointer bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors duration-200 flex items-center justify-center rounded-full">
-              <Search className="w-6 h-6" />
-            </button>
+        <div className="w-full py-6 px-4 border-b border-gray-200 relative">
+          <div className="max-w-4xl mx-auto pr-12">
+            <form onSubmit={handleSearch} className="flex rounded-full border items-center shadow-md">
+              <input
+                ref={inputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="grow h-14 text-lg outline-none placeholder-gray-400 rounded-l-full font-normal pl-6"
+                style={{ background: "transparent" }}
+              />
+              <button 
+                type="submit"
+                className="h-14 w-14 shrink-0 cursor-pointer bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors duration-200 flex items-center justify-center rounded-full"
+              >
+                <Search className="w-6 h-6" />
+              </button>
+            </form>
           </div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:bg-red-600 hover:text-white transition-colors duration-200 flex items-center justify-center rounded-sm"
+            className="absolute top-1/2 -translate-y-1/2 right-4 p-2 text-gray-400 hover:bg-red-600 hover:text-white transition-colors duration-200 flex items-center justify-center rounded-full"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <h3 className="text-sm font-extrabold tracking-widest text-gray-800 mb-4">
-            POPULAR SEARCHES :
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            {popularSearches.map((keyword) => (
-              <span
-                key={keyword}
-                className="px-5 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-lg transition-colors duration-200"
-              >
-                {keyword}
-              </span>
-            ))}
-          </div>
+        {/* Search Results */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {isSearching && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+            </div>
+          )}
+
+          {!isSearching && searchQuery && searchResults.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No products found for "{searchQuery}"</p>
+            </div>
+          )}
+
+          {!isSearching && searchResults.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                Search Results ({searchResults.length})
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {searchResults.map((product) => (
+                  <div
+                    key={product._id}
+                    onClick={() => handleProductClick(product._id)}
+                    className="cursor-pointer group"
+                  >
+                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2">
+                      <img
+                        src={product.images?.[0] || "/placeholder.jpg"}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <h4 className="text-sm font-medium text-gray-900 truncate group-hover:text-brand-primary transition-colors">
+                      {product.name}
+                    </h4>
+                    <p className="text-sm font-bold text-brand-primary">
+                      ₹{Math.round(product.discountedPrice || product.price).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {searchResults.length >= 6 && (
+                <div className="text-center mt-6">
+                  <button
+                    onClick={handleSearch}
+                    className="px-6 py-2 bg-brand-primary text-white rounded-full font-medium hover:bg-brand-primary/90 transition-colors"
+                  >
+                    View All Results
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!searchQuery && (
+            <div className="text-center py-8 text-gray-400">
+              <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Start typing to search products</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -338,7 +448,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   />
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-gray-900">{item.product.name}</h3>
-                    <p className="text-sm text-gray-600">₹{item.price}</p>
+                    <p className="text-sm text-gray-600">₹{Math.round(item.price).toLocaleString()}</p>
                     <div className="flex items-center gap-4 mt-2">
                       <button
                         onClick={(e) => handleUpdateQuantity(item.product._id, item.quantity - 1, e)}
@@ -370,7 +480,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
         {cartItems.length > 0 && (
           <div className="border-t border-gray-200 p-4">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-semibold">Total: ₹{totalAmount}</span>
+              <span className="text-lg font-semibold">Total: ₹{Math.round(totalAmount).toLocaleString()}</span>
             </div>
             <Button 
               onClick={() => {
@@ -451,7 +561,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                   />
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-gray-900">{item.product.name}</h3>
-                    <p className="text-sm text-gray-600">₹{item.product.discountedPrice || item.product.price}</p>
+                    <p className="text-sm text-gray-600">₹{Math.round(item.product.discountedPrice || item.product.price).toLocaleString()}</p>
                   </div>
                   <button
                     onClick={(e) => handleRemoveFromWishlist(item.product._id, e)}
@@ -613,11 +723,14 @@ const Navbar = () => {
 
   // Close overlays on route change
   useEffect(() => {
-    setIsMenuOpen(false);
-    setActiveDropdown(null);
-    setIsSearchOpen(false);
-    setIsCartOpen(false);
-    setIsWishlistOpen(false);
+    const closeOverlays = () => {
+      setIsMenuOpen(false);
+      setActiveDropdown(null);
+      setIsSearchOpen(false);
+      setIsCartOpen(false);
+      setIsWishlistOpen(false);
+    };
+    closeOverlays();
   }, [location]);
 
   // Lock scroll when overlays open
@@ -661,14 +774,14 @@ const Navbar = () => {
 
   // 🕒 Discount timer logic based on saleBanner.endDate
   useEffect(() => {
-    if (!saleBanner?.endDate) {
-      setTimeLeft(null);
+    // If sale banner is not active or has no end date, don't set up timer
+    if (!saleBanner?.isActive || !saleBanner?.endDate) {
       return;
     }
 
     const endTime = new Date(saleBanner.endDate).getTime();
+    
     if (Number.isNaN(endTime)) {
-      setTimeLeft(null);
       return;
     }
 
@@ -706,7 +819,7 @@ const Navbar = () => {
     updateTimer();
     const timerId = setInterval(updateTimer, 1000);
     return () => clearInterval(timerId);
-  }, [saleBanner]);
+  }, [saleBanner?.isActive, saleBanner?.endDate]);
 
   return (
     <>

@@ -18,9 +18,13 @@ const Login = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
+  const { user } = useSelector((state) => state.auth);
 
-  // If already logged in, redirect (optional)
-  if (isAuthenticated) {
+  // If already logged in, redirect (admin to dashboard, others to home)
+  if (isAuthenticated && user) {
+    if (user.role === 'admin') {
+      return <Navigate to="/dashboard" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
@@ -77,7 +81,13 @@ const Login = () => {
       );
 
       toast.success("Logged in successfully ✨");
-      navigate("/", { replace: true });
+      
+      // Redirect admin to dashboard, others to home
+      if (data.user?.role === 'admin') {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (error) {
       console.error("Login error:", error);
       dispatch(authFailure());
@@ -90,7 +100,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-brand-primary-light via-brand-secondary-light to-brand-primary-light">
+    <div className="min-h-screen relative overflow-hidden bg-linear-to-br from-brand-primary-light via-brand-secondary-light to-brand-primary-light">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Floating Icons */}

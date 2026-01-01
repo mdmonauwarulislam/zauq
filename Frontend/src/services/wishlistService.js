@@ -38,11 +38,46 @@ const clearWishlist = async () => {
   return response.data;
 };
 
+// Admin endpoints
+const getWishlistedProducts = async (params = {}) => {
+  const response = await Request({
+    url: "wishlist/admin/products",
+    method: "GET",
+    params,
+    secure: true,
+  });
+  return response;
+};
+
+const getProductWishlistUsers = async (productId, params = {}) => {
+  const response = await Request({
+    url: `wishlist/admin/products/${productId}/users`,
+    method: "GET",
+    params,
+    secure: true,
+  });
+  return response;
+};
+
+const getAllUsersWishlists = async (params = {}) => {
+  const response = await Request({
+    url: "wishlist/admin/users",
+    method: "GET",
+    params,
+    secure: true,
+  });
+  return response;
+};
+
 const wishlistService = {
   getWishlist,
   addToWishlist,
   removeFromWishlist,
   clearWishlist,
+  // Admin
+  getWishlistedProducts,
+  getProductWishlistUsers,
+  getAllUsersWishlists,
 };
 
 export default wishlistService;

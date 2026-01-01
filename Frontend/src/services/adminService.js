@@ -2,9 +2,9 @@
 import Request from "@/config/apiConfig";
 import apiUrls from "@/config/apiUrls";
 
-const getDashboardStats = async () =>
+const getDashboardStats = async (filter = 'weekly') =>
   Request({
-    url: apiUrls.admin.stats,
+    url: `${apiUrls.admin.stats}?filter=${filter}`,
     method: "GET",
     secure: true,
   });

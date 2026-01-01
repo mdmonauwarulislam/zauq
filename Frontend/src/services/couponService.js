@@ -11,9 +11,17 @@ const validateCoupon = async (payload) =>
   });
 
 // Admin
-const getAllCoupons = async () =>
+const getAllCoupons = async (params = {}) =>
   Request({
     url: apiUrls.coupons.list,
+    method: "GET",
+    params,
+    secure: true,
+  });
+
+const getCouponById = async (id) =>
+  Request({
+    url: `${apiUrls.coupons.list}/${id}`,
     method: "GET",
     secure: true,
   });
@@ -34,6 +42,13 @@ const updateCoupon = async (id, payload) =>
     secure: true,
   });
 
+const toggleCouponStatus = async (id) =>
+  Request({
+    url: `${apiUrls.coupons.list}/${id}/toggle`,
+    method: "PUT",
+    secure: true,
+  });
+
 const deleteCoupon = async (id) =>
   Request({
     url: apiUrls.coupons.delete(id),
@@ -44,8 +59,10 @@ const deleteCoupon = async (id) =>
 const CouponService = {
   validateCoupon,
   getAllCoupons,
+  getCouponById,
   createCoupon,
   updateCoupon,
+  toggleCouponStatus,
   deleteCoupon,
 };
 

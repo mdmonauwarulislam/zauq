@@ -22,11 +22,7 @@ export const ORDER_STATUS = Object.freeze({
   
   /** Supported payment methods */
   export const PAYMENT_METHODS = Object.freeze({
-    CREDIT_CARD: "credit-card",
-    DEBIT_CARD: "debit-card",
-    UPI: "upi",
-    NET_BANKING: "net-banking",
-    WALLET: "wallet",
+    RAZORPAY: "razorpay",
   });
   
   /**

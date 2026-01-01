@@ -151,10 +151,10 @@ const ProductCard = memo(({ product }) => {
           <div className="flex flex-col space-y-0.5 sm:space-y-1 flex-1 min-w-0">
             <h3 className="text-xs sm:text-sm md:text-base font-medium text-gray-800 truncate">{name}</h3>
             <div className="flex items-center space-x-1 sm:space-x-2">
-              <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900">₹{displayPrice}</span>
+              <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900">₹{displayPrice?.toLocaleString()}</span>
               {hasDiscount && (
                 <span className="text-[10px] sm:text-xs md:text-sm text-gray-500 line-through">
-                  ₹{price}
+                  ₹{price?.toLocaleString()}
                 </span>
               )}
             </div>
