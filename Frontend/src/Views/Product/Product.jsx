@@ -480,40 +480,49 @@ const Product = () => {
       <div className="px-6 py-8 flex gap-8">
         {/* Sidebar - Desktop */}
         <aside className="hidden lg:block w-72 shrink-0">
-          <div className="bg-white p-6 rounded-2xl shadow sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg">Filters</h3>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            {/* Filter Header */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gradient-to-r from-brand-primary/5 to-transparent">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center">
+                  <SlidersHorizontal className="w-4 h-4 text-brand-primary" />
+                </div>
+                <h3 className="font-bold text-lg text-gray-800">Filters</h3>
+              </div>
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-brand-primary"
+                  className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium transition"
                 >
                   Clear All
                 </button>
               )}
             </div>
 
+            <div className="p-5">
+
             {/* Categories */}
-            <div className="mb-4 pb-4 border-b">
+            <div className="mb-5 pb-5 border-b border-dashed border-gray-200">
               <button
                 onClick={() => toggleSection('categories')}
                 className="w-full flex items-center justify-between mb-3 group"
               >
-                <h4 className="font-semibold text-sm uppercase">Categories</h4>
-                {openSections.categories ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-brand-primary transition" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-brand-primary transition" />
-                )}
+                <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">Categories</h4>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.categories ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                  {openSections.categories ? (
+                    <ChevronUp className="w-4 h-4 text-brand-primary" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
+                </div>
               </button>
               {openSections.categories && (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                   <button
                     onClick={() => handleCategoryChange('')}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
-                      !selectedCategory
-                        ? 'bg-brand-secondary-light text-brand-primary font-medium'
-                        : 'text-gray-600 hover:bg-gray-100'
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition border ${!selectedCategory
+                        ? 'bg-brand-primary text-white border-brand-primary font-medium shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200'
                     }`}
                   >
                     All Categories
@@ -522,15 +531,14 @@ const Product = () => {
                     <button
                       key={category._id}
                       onClick={() => handleCategoryChange(category._id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
-                        selectedCategory === category._id
-                          ? 'bg-brand-secondary-light text-brand-primary font-medium'
-                          : 'text-gray-600 hover:bg-gray-100'
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition border ${selectedCategory === category._id
+                          ? 'bg-brand-primary text-white border-brand-primary font-medium shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200'
                       }`}
                     >
                       {category.name}
                       {category.productCount > 0 && (
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className={`text-xs ml-2 ${selectedCategory === category._id ? 'text-white/70' : 'text-gray-400'}`}>
                           ({category.productCount})
                         </span>
                       )}
@@ -541,53 +549,65 @@ const Product = () => {
             </div>
 
             {/* Price Range */}
-            <div className="mb-4 pb-4 border-b">
+            <div className="mb-5 pb-5 border-b border-dashed border-gray-200">
               <button
                 onClick={() => toggleSection('price')}
                 className="w-full flex items-center justify-between mb-3 group"
               >
-                <h4 className="font-semibold text-sm uppercase">Price Range</h4>
-                {openSections.price ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                )}
+                <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">Price Range</h4>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.price ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                  {openSections.price ? (
+                    <ChevronUp className="w-4 h-4 text-brand-primary" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
+                </div>
               </button>
               {openSections.price && (
                 <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={priceRange.min}
-                      onChange={(e) =>
-                        setPriceRange((prev) => ({
-                          ...prev,
-                          min: Number(e.target.value),
-                        }))
-                      }
-                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    <span className="text-gray-500">-</span>
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={priceRange.max}
-                      onChange={(e) =>
-                        setPriceRange((prev) => ({
-                          ...prev,
-                          max: Number(e.target.value),
-                        }))
-                      }
-                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
+                  <div className="flex gap-3 items-center">
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500 mb-1 block">Min</label>
+                      <input
+                        type="number"
+                        placeholder="₹0"
+                        value={priceRange.min}
+                        onChange={(e) =>
+                          setPriceRange((prev) => ({
+                            ...prev,
+                            min: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full px-3 py-2.5 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-brand-primary bg-gray-50 focus:bg-white transition"
+                      />
+                    </div>
+                    <span className="text-gray-400 mt-5">—</span>
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500 mb-1 block">Max</label>
+                      <input
+                        type="number"
+                        placeholder="₹100000"
+                        value={priceRange.max}
+                        onChange={(e) =>
+                          setPriceRange((prev) => ({
+                            ...prev,
+                            max: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full px-3 py-2.5 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-brand-primary bg-gray-50 focus:bg-white transition"
+                      />
+                    </div>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {[1000, 5000, 10000, 20000, 50000].map((price) => (
                       <button
                         key={price}
                         onClick={() => setPriceRange({ min: 0, max: price })}
-                        className="px-3 py-1 text-xs border rounded-full hover:border-purple-600 hover:text-purple-600 transition"
+                        className={`px-3 py-1.5 text-xs rounded-full transition border-2 font-medium ${
+                          priceRange.max === price && priceRange.min === 0
+                            ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                            : 'border-gray-200 text-gray-600 hover:border-brand-primary hover:text-brand-primary'
+                        }`}
                       >
                         Under ₹{price.toLocaleString()}
                       </button>
@@ -599,32 +619,38 @@ const Product = () => {
 
             {/* Brands */}
             {brands.length > 0 && (
-              <div className="mb-4 pb-4 border-b">
+              <div className="mb-5 pb-5 border-b border-dashed border-gray-200">
                 <button
                   onClick={() => toggleSection('brands')}
                   className="w-full flex items-center justify-between mb-3 group"
                 >
-                  <h4 className="font-semibold text-sm uppercase">Brands</h4>
-                  {openSections.brands ? (
-                    <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                  )}
+                  <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">Brands</h4>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.brands ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                    {openSections.brands ? (
+                      <ChevronUp className="w-4 h-4 text-brand-primary" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </div>
                 </button>
                 {openSections.brands && (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
                     {brands.map((brand) => (
                       <label
                         key={brand}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
+                        className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-xl transition border-2 ${
+                          selectedBrands.includes(brand)
+                            ? 'bg-brand-primary/5 border-brand-primary/30'
+                            : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
+                        }`}
                       >
                         <input
                           type="checkbox"
                           checked={selectedBrands.includes(brand)}
                           onChange={() => handleBrandToggle(brand)}
-                          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                          className="w-4 h-4 text-brand-primary rounded border-2 border-gray-300 focus:ring-brand-primary focus:ring-offset-0"
                         />
-                        <span className="text-sm">{brand}</span>
+                        <span className={`text-sm ${selectedBrands.includes(brand) ? 'text-brand-primary font-medium' : 'text-gray-700'}`}>{brand}</span>
                       </label>
                     ))}
                   </div>
@@ -633,45 +659,52 @@ const Product = () => {
             )}
 
             {/* Discount */}
-            <div className="mb-4">
+            <div>
               <button
                 onClick={() => toggleSection('discount')}
                 className="w-full flex items-center justify-between mb-3 group"
               >
-                <h4 className="font-semibold text-sm uppercase">Discount</h4>
-                {openSections.discount ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                )}
+                <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">Discount</h4>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.discount ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                  {openSections.discount ? (
+                    <ChevronUp className="w-4 h-4 text-brand-primary" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  )}
+                </div>
               </button>
               {openSections.discount && (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {discountOptions.map((option) => (
                     <label
                       key={option.value}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
+                      className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-xl transition border-2 ${
+                        selectedDiscount === option.value
+                          ? 'bg-brand-primary/5 border-brand-primary/30'
+                          : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
+                      }`}
                     >
                       <input
                         type="radio"
                         name="discount"
                         checked={selectedDiscount === option.value}
                         onChange={() => setSelectedDiscount(option.value)}
-                        className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                        className="w-4 h-4 text-brand-primary border-2 border-gray-300 focus:ring-brand-primary focus:ring-offset-0"
                       />
-                      <span className="text-sm">{option.label}</span>
+                      <span className={`text-sm ${selectedDiscount === option.value ? 'text-brand-primary font-medium' : 'text-gray-700'}`}>{option.label}</span>
                     </label>
                   ))}
                   {selectedDiscount && (
                     <button
                       onClick={() => setSelectedDiscount('')}
-                      className="text-sm text-purple-600 hover:text-purple-700 ml-6"
+                      className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium ml-2 mt-2"
                     >
-                      Clear
+                      Clear discount filter
                     </button>
                   )}
                 </div>
               )}
+            </div>
             </div>
           </div>
         </aside>
@@ -750,45 +783,52 @@ const Product = () => {
 
       {/* Mobile Filter Modal */}
       {showFilters && (
-        <div className="fixed inset-0 bg-black/50 z-50 lg:hidden">
-          <div className="absolute inset-y-0 right-0 w-full sm:w-96 bg-white shadow-xl">
+        <div className="fixed inset-0 bg-black/50 z-50 lg:hidden backdrop-blur-sm">
+          <div className="absolute inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl">
             <div className="h-full flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
-                <h3 className="text-lg font-bold">Filters</h3>
+              <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-gradient-to-r from-brand-primary/5 to-white">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center">
+                    <SlidersHorizontal className="w-4 h-4 text-brand-primary" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-800">Filters</h3>
+                </div>
                 <button
                   onClick={() => setShowFilters(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition"
+                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg transition"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
 
               {/* Filters Content */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-5">
                 {/* Categories */}
-                <div className="mb-4 pb-4 border-b">
+                <div className="mb-5 pb-5 border-b border-dashed border-gray-200">
                   <button
                     onClick={() => toggleSection('categories')}
                     className="w-full flex items-center justify-between mb-3 group"
                   >
-                    <h4 className="font-semibold text-sm uppercase">
+                    <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">
                       Categories
                     </h4>
-                    {openSections.categories ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                    )}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.categories ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                      {openSections.categories ? (
+                        <ChevronUp className="w-4 h-4 text-brand-primary" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      )}
+                    </div>
                   </button>
                   {openSections.categories && (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <button
                         onClick={() => handleCategoryChange('')}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
+                        className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition border-2 ${
                           !selectedCategory
-                            ? 'bg-purple-100 text-purple-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-brand-primary text-white border-brand-primary font-medium shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200'
                         }`}
                       >
                         All Categories
@@ -797,15 +837,15 @@ const Product = () => {
                         <button
                           key={category._id}
                           onClick={() => handleCategoryChange(category._id)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
+                          className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition border-2 ${
                             selectedCategory === category._id
-                              ? 'bg-purple-100 text-purple-700 font-medium'
-                              : 'text-gray-600 hover:bg-gray-100'
+                              ? 'bg-brand-primary text-white border-brand-primary font-medium shadow-sm'
+                              : 'text-gray-600 hover:bg-gray-50 border-transparent hover:border-gray-200'
                           }`}
                         >
                           {category.name}
                           {category.productCount > 0 && (
-                            <span className="text-xs text-gray-500 ml-2">
+                            <span className={`text-xs ml-2 ${selectedCategory === category._id ? 'text-white/70' : 'text-gray-400'}`}>
                               ({category.productCount})
                             </span>
                           )}
@@ -816,48 +856,56 @@ const Product = () => {
                 </div>
 
                 {/* Price Range */}
-                <div className="mb-4 pb-4 border-b">
+                <div className="mb-5 pb-5 border-b border-dashed border-gray-200">
                   <button
                     onClick={() => toggleSection('price')}
                     className="w-full flex items-center justify-between mb-3 group"
                   >
-                    <h4 className="font-semibold text-sm uppercase">
+                    <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">
                       Price Range
                     </h4>
-                    {openSections.price ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                    )}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.price ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                      {openSections.price ? (
+                        <ChevronUp className="w-4 h-4 text-brand-primary" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      )}
+                    </div>
                   </button>
                   {openSections.price && (
                     <div className="space-y-4">
-                      <div className="flex gap-3">
-                        <input
-                          type="number"
-                          placeholder="Min"
-                          value={priceRange.min}
-                          onChange={(e) =>
-                            setPriceRange((prev) => ({
-                              ...prev,
-                              min: Number(e.target.value),
-                            }))
-                          }
-                          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                        <span className="text-gray-500">-</span>
-                        <input
-                          type="number"
-                          placeholder="Max"
-                          value={priceRange.max}
-                          onChange={(e) =>
-                            setPriceRange((prev) => ({
-                              ...prev,
-                              max: Number(e.target.value),
-                            }))
-                          }
-                          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                      <div className="flex gap-3 items-center">
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-500 mb-1 block">Min</label>
+                          <input
+                            type="number"
+                            placeholder="₹0"
+                            value={priceRange.min}
+                            onChange={(e) =>
+                              setPriceRange((prev) => ({
+                                ...prev,
+                                min: Number(e.target.value),
+                              }))
+                            }
+                            className="w-full px-3 py-2.5 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-brand-primary bg-gray-50 focus:bg-white transition"
+                          />
+                        </div>
+                        <span className="text-gray-400 mt-5">—</span>
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-500 mb-1 block">Max</label>
+                          <input
+                            type="number"
+                            placeholder="₹100000"
+                            value={priceRange.max}
+                            onChange={(e) =>
+                              setPriceRange((prev) => ({
+                                ...prev,
+                                max: Number(e.target.value),
+                              }))
+                            }
+                            className="w-full px-3 py-2.5 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-brand-primary bg-gray-50 focus:bg-white transition"
+                          />
+                        </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         {[1000, 5000, 10000, 20000, 50000].map((price) => (
@@ -866,7 +914,11 @@ const Product = () => {
                             onClick={() =>
                               setPriceRange({ min: 0, max: price })
                             }
-                            className="px-3 py-1 text-xs border rounded-full hover:border-purple-600 hover:text-purple-600 transition"
+                            className={`px-3 py-1.5 text-xs rounded-full transition border-2 font-medium ${
+                              priceRange.max === price && priceRange.min === 0
+                                ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                                : 'border-gray-200 text-gray-600 hover:border-brand-primary hover:text-brand-primary'
+                            }`}
                           >
                             Under ₹{price.toLocaleString()}
                           </button>
@@ -878,34 +930,40 @@ const Product = () => {
 
                 {/* Brands */}
                 {brands.length > 0 && (
-                  <div className="mb-4 pb-4 border-b">
+                  <div className="mb-5 pb-5 border-b border-dashed border-gray-200">
                     <button
                       onClick={() => toggleSection('brands')}
                       className="w-full flex items-center justify-between mb-3 group"
                     >
-                      <h4 className="font-semibold text-sm uppercase">
+                      <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">
                         Brands
                       </h4>
-                      {openSections.brands ? (
-                        <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                      )}
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.brands ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                        {openSections.brands ? (
+                          <ChevronUp className="w-4 h-4 text-brand-primary" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                        )}
+                      </div>
                     </button>
                     {openSections.brands && (
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
                         {brands.map((brand) => (
                           <label
                             key={brand}
-                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
+                            className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-xl transition border-2 ${
+                              selectedBrands.includes(brand)
+                                ? 'bg-brand-primary/5 border-brand-primary/30'
+                                : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
+                            }`}
                           >
                             <input
                               type="checkbox"
                               checked={selectedBrands.includes(brand)}
                               onChange={() => handleBrandToggle(brand)}
-                              className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                              className="w-4 h-4 text-brand-primary rounded border-2 border-gray-300 focus:ring-brand-primary focus:ring-offset-0"
                             />
-                            <span className="text-sm">{brand}</span>
+                            <span className={`text-sm ${selectedBrands.includes(brand) ? 'text-brand-primary font-medium' : 'text-gray-700'}`}>{brand}</span>
                           </label>
                         ))}
                       </div>
@@ -914,43 +972,49 @@ const Product = () => {
                 )}
 
                 {/* Discount */}
-                <div className="mb-4">
+                <div>
                   <button
                     onClick={() => toggleSection('discount')}
                     className="w-full flex items-center justify-between mb-3 group"
                   >
-                    <h4 className="font-semibold text-sm uppercase">
+                    <h4 className="font-semibold text-sm uppercase tracking-wide text-gray-700">
                       Discount
                     </h4>
-                    {openSections.discount ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-purple-600 transition" />
-                    )}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center transition ${openSections.discount ? 'bg-brand-primary/10' : 'bg-gray-100'}`}>
+                      {openSections.discount ? (
+                        <ChevronUp className="w-4 h-4 text-brand-primary" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      )}
+                    </div>
                   </button>
                   {openSections.discount && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {discountOptions.map((option) => (
                         <label
                           key={option.value}
-                          className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
+                          className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-xl transition border-2 ${
+                            selectedDiscount === option.value
+                              ? 'bg-brand-primary/5 border-brand-primary/30'
+                              : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
+                          }`}
                         >
                           <input
                             type="radio"
                             name="discount-mobile"
                             checked={selectedDiscount === option.value}
                             onChange={() => setSelectedDiscount(option.value)}
-                            className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                            className="w-4 h-4 text-brand-primary border-2 border-gray-300 focus:ring-brand-primary focus:ring-offset-0"
                           />
-                          <span className="text-sm">{option.label}</span>
+                          <span className={`text-sm ${selectedDiscount === option.value ? 'text-brand-primary font-medium' : 'text-gray-700'}`}>{option.label}</span>
                         </label>
                       ))}
                       {selectedDiscount && (
                         <button
                           onClick={() => setSelectedDiscount('')}
-                          className="text-sm text-purple-600 hover:text-purple-700 ml-6"
+                          className="text-sm text-brand-primary hover:text-brand-primary/80 font-medium ml-2 mt-2"
                         >
-                          Clear
+                          Clear discount filter
                         </button>
                       )}
                     </div>
@@ -959,16 +1023,16 @@ const Product = () => {
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 bg-white border-t p-6 flex gap-3">
+              <div className="sticky bottom-0 bg-white border-t border-gray-100 p-5 flex gap-3 shadow-lg">
                 <button
                   onClick={clearFilters}
-                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition"
+                  className="flex-1 px-6 py-3.5 border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition"
                 >
                   Clear All
                 </button>
                 <button
                   onClick={() => setShowFilters(false)}
-                  className="flex-1 px-6 py-3 bg-brand-primary text-white rounded-lg font-medium hover:shadow-lg transition"
+                  className="flex-1 px-6 py-3.5 bg-brand-primary text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-brand-primary/25 transition"
                 >
                   Apply Filters
                 </button>

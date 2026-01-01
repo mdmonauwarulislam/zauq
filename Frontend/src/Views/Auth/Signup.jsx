@@ -7,14 +7,14 @@ import {
   EyeOff,
   ShoppingBag,
   Sparkles,
-  TrendingUp,
+  ArrowRight,
   Heart,
   Star,
   Package,
   Gift,
   Zap,
-  X,
-  Home,
+  Users,
+  TrendingUp,
 } from "lucide-react";
 
 import AuthService from "@/services/AuthService";
@@ -118,7 +118,6 @@ const Signup = () => {
       console.error("Signup error:", error);
       dispatch(authFailure());
 
-      // Detailed errors already handled by Request (toasts)
       if (!error?.data?.message) {
         toast.error("Signup failed. Please try again.");
       }
@@ -126,220 +125,242 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-linear-to-br from-brand-primary-light via-brand-secondary-light to-brand-primary-light">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Floating Icons */}
-        <div className="absolute top-10 right-16 animate-float">
-          <Gift className="w-14 h-14 text-purple-300 opacity-20" />
-        </div>
-        <div className="absolute top-1/4 left-16 animate-float-delayed">
-          <Star className="w-12 h-12 text-yellow-300 opacity-20" />
-        </div>
-        <div className="absolute bottom-40 right-20 animate-float">
-          <Heart className="w-16 h-16 text-pink-300 opacity-20" />
-        </div>
-        <div className="absolute top-1/2 right-1/4 animate-float-delayed">
-          <Zap className="w-10 h-10 text-blue-300 opacity-20" />
-        </div>
-        <div className="absolute bottom-20 left-1/4 animate-float">
-          <Package className="w-12 h-12 text-purple-300 opacity-20" />
-        </div>
-        <div className="absolute top-20 left-1/3 animate-float-delayed">
-          <ShoppingBag className="w-14 h-14 text-pink-300 opacity-20" />
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
+      {/* Left Side - Form */}
+      <div className="w-full lg:w-1/2 h-screen flex flex-col bg-white">
+        {/* Mobile Header */}
+        <div className="lg:hidden px-6 py-4 border-b border-gray-100" style={{ background: 'linear-gradient(135deg, #3d1a78 0%, #6b21a8 100%)' }}>
+          <Link to="/" className="text-2xl font-bold text-white">ZAUQ</Link>
         </div>
 
-        {/* Gradient Orbs */}
-        <div className="absolute top-0 -right-40 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-40 right-20 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-      </div>
+        {/* Form Container */}
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-10">
+          <div className="w-full max-w-md">
+            {/* Back to Home - Desktop */}
+            <Link 
+              to="/"
+              className="hidden lg:inline-flex items-center gap-2 text-sm text-gray-400 hover:text-brand-primary transition-colors mb-4 group"
+            >
+              <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+              Back to Home
+            </Link>
 
-      {/* Main Content */}
-      <div className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-12 md:py-12">
-        {/* Return to Home Button */}
-        <button
-          onClick={() => navigate("/")}
-          className="absolute cursor-pointer top-6 left-4 md:left-8 z-10 px-4 py-2.5 bg-white/70 backdrop-blur-md hover:bg-white/90 rounded-full shadow-xl border border-white/30 transition-all transform hover:scale-105 group flex items-center gap-2"
-          aria-label="Return to home"
-        >
-          <Home className="w-4 h-4 text-brand-primary " />
-          <span className="text-sm font-semibold text-brand-primary ">
-            Back to Home
-          </span>
-        </button>
+            {/* Header */}
+            <div className="mb-4">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
+              <p className="text-gray-500">
+                Already have an account?{" "}
+                <Link to="/login" className="text-brand-primary font-semibold hover:underline">
+                  Sign in
+                </Link>
+              </p>
+            </div>
 
-        {/* Glassmorphic Modal */}
-        <div className="w-full max-w-lg">
-          <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 relative overflow-hidden">
-            {/* Decorative gradient overlay */}
-            <div className="absolute top-0 left-0 w-40 h-40 bg-linear-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 right-0 w-40 h-40 bg-linear-to-br from-pink-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
-
-            {/* Content */}
-            <div className="relative z-10">
-              {/* Brand */}
-              <div className="text-center mb-8">
-                
-                <h1 className="text-4xl font-bold text-brand-primary bg-clip-text mb-2">
-                  ZAUQ
-                </h1>
-                <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Join us and start your fashion journey
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Name fields */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      htmlFor="firstName"
-                      className="block text-sm font-semibold text-gray-700 mb-2"
-                    >
-                      First name
-                    </label>
-                    <input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      autoComplete="given-name"
-                      value={form.firstName}
-                      onChange={handleChange}
-                      className="w-full rounded-md border-2 border-gray-200 bg-white/50 backdrop-blur-sm px-5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                      placeholder="Saiful"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="lastName"
-                      className="block text-sm font-semibold text-gray-700 mb-2"
-                    >
-                      Last name
-                    </label>
-                    <input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      autoComplete="family-name"
-                      value={form.lastName}
-                      onChange={handleChange}
-                      className="w-full rounded-md border-2 border-gray-200 bg-white/50 backdrop-blur-sm px-5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                      placeholder="Islam"
-                    />
-                  </div>
-                </div>
-
-                {/* Email */}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-3">
+              {/* Name Fields */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
-                    Email address
+                  <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-1">
+                    First Name
                   </label>
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    value={form.email}
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    autoComplete="given-name"
+                    value={form.firstName}
                     onChange={handleChange}
-                    className="w-full rounded-md border-2 border-gray-200 bg-white/50 backdrop-blur-sm px-5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="saiful@gmail.com"
+                    className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-primary focus:bg-white transition-all"
+                    placeholder="John"
                   />
                 </div>
-
-                {/* Password */}
                 <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={form.password}
-                      onChange={handleChange}
-                      className="w-full rounded-md border-2 border-gray-200 bg-white/50 backdrop-blur-sm px-5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all pr-12"
-                      placeholder="Enter a strong password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
-                    Confirm password
+                  <label htmlFor="lastName" className="block text-sm font-semibold text-gray-700 mb-1">
+                    Last Name
                   </label>
                   <input
-                    id="confirmPassword"
-                    name="confirmPassword"
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    autoComplete="family-name"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-primary focus:bg-white transition-all"
+                    placeholder="Doe"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-primary focus:bg-white transition-all"
+                  placeholder="john@example.com"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
-                    value={form.confirmPassword}
+                    value={form.password}
                     onChange={handleChange}
-                    className="w-full rounded-md border-2 border-gray-200 bg-white/50 backdrop-blur-sm px-5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="Re-enter password"
+                    className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-primary focus:bg-white transition-all pr-12"
+                    placeholder="Create a strong password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-brand-primary disabled:opacity-60 disabled:cursor-not-allowed text-brand-text-primary rounded-md text-sm font-semibold py-3.5 shadow-lg shadow-brand-primary/30 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      Creating account...
-                    </>
-                  ) : (
-                    <>Create ZAUQ Account</>
-                  )}
-                </button>
-              </form>
-
-              {/* Divider */}
-              <div className="mt-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-linear-to-r from-transparent via-gray-300 to-transparent" />
-                <span className="text-xs text-gray-500 font-medium px-2">
-                  Already a member?
-                </span>
-                <div className="h-px flex-1 bg-linear-to-r from-transparent via-gray-300 to-transparent" />
               </div>
 
-              {/* Login link */}
-              <div className="mt-6 text-center">
-                <Link
-                  to="/login"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-brand-primary hover:underline"
-                >
-                  Sign in to your account
-                  <TrendingUp className="w-4 h-4" />
-                </Link>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-primary focus:bg-white transition-all"
+                  placeholder="Re-enter your password"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-brand-primary hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl font-semibold shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mt-1"
+                style={{ boxShadow: '0 8px 30px -8px rgba(61, 26, 120, 0.5)' }}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Creating account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="my-4 flex items-center gap-4">
+              <div className="flex-1 h-px bg-gray-200"></div>
+              <span className="text-sm text-gray-400">or</span>
+              <div className="flex-1 h-px bg-gray-200"></div>
+            </div>
+
+            {/* Sign In Button */}
+            <Link
+              to="/login"
+              className="w-full py-3 bg-gray-50 hover:bg-gray-100 border-2 border-gray-100 text-gray-700 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 group"
+            >
+              <TrendingUp className="w-5 h-5 text-brand-primary group-hover:scale-110 transition-transform" />
+              Sign In to Existing Account
+            </Link>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 text-center text-xs text-gray-400 border-t border-gray-100">
+          © 2026 ZAUQ. All rights reserved.
+        </div>
+      </div>
+
+      {/* Right Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 h-screen relative overflow-hidden" style={{ background: 'linear-gradient(225deg, #3d1a78 0%, #6b21a8 50%, #3d1a78 100%)' }}>
+        {/* Decorative Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute bottom-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-20 right-10 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
+        </div>
+
+        {/* Floating Icons */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-24 right-16" style={{ animation: 'float 6s ease-in-out infinite' }}>
+            <Gift className="w-12 h-12 text-white/20" />
+          </div>
+          <div className="absolute top-40 left-24" style={{ animation: 'float 6s ease-in-out infinite', animationDelay: '2s' }}>
+            <Star className="w-14 h-14 text-white/15" />
+          </div>
+          <div className="absolute bottom-40 right-24" style={{ animation: 'float 6s ease-in-out infinite', animationDelay: '1s' }}>
+            <Heart className="w-10 h-10 text-white/20" />
+          </div>
+          <div className="absolute bottom-24 left-16" style={{ animation: 'float 6s ease-in-out infinite', animationDelay: '3s' }}>
+            <ShoppingBag className="w-12 h-12 text-white/15" />
+          </div>
+          <div className="absolute top-1/3 right-1/3" style={{ animation: 'float 6s ease-in-out infinite', animationDelay: '4s' }}>
+            <Zap className="w-8 h-8 text-white/10" />
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center px-10 xl:px-12 w-full">
+          <Link to="/" className="mb-6">
+            <h1 className="text-5xl xl:text-6xl font-bold text-white tracking-tight drop-shadow-lg">ZAUQ</h1>
+          </Link>
+          
+          <h2 className="text-3xl xl:text-4xl font-bold text-white mb-3 leading-tight">
+            Join the<br />Family!
+          </h2>
+          <p className="text-base text-white/70 mb-8 max-w-sm leading-relaxed">
+            Create your account and unlock exclusive benefits, personalized recommendations, and much more.
+          </p>
+
+          {/* Benefits */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-base">Exclusive Access</p>
+                <p className="text-xs text-white/50">Early access to new arrivals</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-base">Faster Checkout</p>
+                <p className="text-xs text-white/50">Save your preferences</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-base">Rewards Program</p>
+                <p className="text-xs text-white/50">Earn points on every purchase</p>
               </div>
             </div>
           </div>
@@ -350,27 +371,6 @@ const Signup = () => {
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
-        }
-        @keyframes blob {
-          0%, 100% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        .animate-float-delayed {
-          animation: float 6s ease-in-out infinite;
-          animation-delay: 2s;
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
         }
       `}</style>
     </div>
