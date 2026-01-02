@@ -595,7 +595,7 @@ const HeroConfig = () => {
                   </button>
 
                   {dropdownOpen.featuredCollections && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border-2 border-blue-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
+                    <div className="absolute z-50 w-full bottom-full mb-2 bg-white border-2 border-blue-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
                       {allCategories
                         .filter((c) => !featuredCollections.includes(c._id || c))
                         .map((c) => {
@@ -699,7 +699,7 @@ const HeroConfig = () => {
                   </button>
 
                   {dropdownOpen.mainCategories && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border-2 border-green-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
+                    <div className="absolute z-50 w-full bottom-full mb-2 bg-white border-2 border-green-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
                       {allCategories
                         .filter((c) => !mainCategories.includes(c._id || c))
                         .map((c) => {
@@ -805,7 +805,7 @@ const HeroConfig = () => {
                 </button>
 
                 {dropdownOpen.latestProducts && (
-                  <div className="absolute z-50 w-full mt-2 bg-white border-2 border-orange-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
+                  <div className="absolute z-50 w-full bottom-full mb-2 bg-white border-2 border-orange-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
                     {latestCandidates
                       .filter((p) => !latestProducts.includes(p._id || p))
                       .map((p) => {
@@ -924,7 +924,7 @@ const HeroConfig = () => {
                 </button>
 
                 {dropdownOpen.featuredReviews && (
-                  <div className="absolute z-50 w-full mt-2 bg-white border-2 border-pink-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
+                  <div className="absolute z-50 w-full bottom-full mb-2 bg-white border-2 border-pink-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
                     {featuredReviews
                       .filter((r) => !selectedReviews.includes(r._id || r))
                       .map((r) => {

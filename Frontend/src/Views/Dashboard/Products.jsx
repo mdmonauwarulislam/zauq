@@ -516,7 +516,7 @@ const Products = () => {
               </div>
 
               {/* Product Image */}
-              <div className="relative h-48 bg-gray-100 overflow-hidden">
+              <div className="relative h-72 bg-gray-100 overflow-hidden">
                 {p.images?.[0] ? (
                   <img
                     src={p.images[0]}
