@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import AuthService from "@/services/AuthService";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -7,6 +8,7 @@ import OrderService from "@/services/orderService";
 import PaymentService from "@/services/paymentService";
 import CouponService from "@/services/couponService";
 import { clearCart } from "@/redux/slices/cartSlice";
+import { setUser } from "@/redux/slices/authSlice";
 
 const Checkout = () => {
   const dispatch = useDispatch();
@@ -15,6 +17,61 @@ const Checkout = () => {
   const { items: cartItems, totalAmount } = useSelector((state) => state.cart);
 
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "India",
+    isDefault: false,
+  });
+    const handleAddressChange = (e) => {
+      const { name, value, type, checked } = e.target;
+      setAddressForm((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    };
+
+    const handleAddAddress = async (e) => {
+      e.preventDefault();
+      if (!addressForm.name || !addressForm.phone || !addressForm.address || !addressForm.city) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+      try {
+        setSavingAddress(true);
+        const updatedAddresses = [...(user.addresses || []), addressForm];
+        const { data } = await AuthService.updateProfile({ addresses: updatedAddresses });
+        if (data?.user) {
+          toast.success("Address added successfully ✨");
+          setShowAddressModal(false);
+          setAddressForm({
+            name: "",
+            phone: "",
+            address: "",
+            city: "",
+            state: "",
+            postalCode: "",
+            country: "India",
+            isDefault: false,
+          });
+          // Update selected address to the new one
+          setSelectedAddress(data.user.addresses[data.user.addresses.length - 1]);
+          // Update user in redux for real-time reflect
+          dispatch(setUser(data.user));
+        }
+      } catch (error) {
+        console.error("Add address error:", error);
+        toast.error("Failed to add address.");
+      } finally {
+        setSavingAddress(false);
+      }
+    };
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discount, setDiscount] = useState(0);
@@ -210,56 +267,180 @@ const Checkout = () => {
                 <div className="text-center py-8">
                   <p className="text-gray-600 mb-4">No saved addresses</p>
                   <button
-                    onClick={() => navigate("/profile")}
-                    className="text-brand-primary hover:text-brand-primary  font-medium"
+                    onClick={() => setShowAddressModal(true)}
+                    className="text-brand-primary hover:text-brand-primary font-medium"
                   >
-                    Add Address in Profile
+                    + Add Address
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {user?.addresses?.map((address, index) => (
-                    <div
-                      key={index}
-                      onClick={() => setSelectedAddress(address)}
-                      className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
-                        selectedAddress === address
-                          ? "border-brand-primary bg-brand-primary-light"
-                          : "border-gray-200 hover:border-brand-primary"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-gray-900">{address.name}</h4>
-                            {address.isDefault && (
-                              <span className="px-2 py-0.5 bg-brand-primary-light text-brand-secondary border border-brand-secondary rounded-full text-xs font-medium">
-                                Default
-                              </span>
+                <>
+                  <div className="space-y-3">
+                    {user?.addresses?.map((address, index) => (
+                      <div
+                        key={index}
+                        onClick={() => setSelectedAddress(address)}
+                        className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                          selectedAddress === address
+                            ? "border-brand-primary bg-brand-primary-light"
+                            : "border-gray-200 hover:border-brand-primary"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold text-gray-900">{address.name}</h4>
+                              {address.isDefault && (
+                                <span className="px-2 py-0.5 bg-brand-primary-light text-brand-secondary border border-brand-secondary rounded-full text-xs font-medium">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">{address.phone}</p>
+                            <p className="text-sm text-gray-700">
+                              {address.address}, {address.city}
+                              {address.state && `, ${address.state}`} - {address.postalCode}
+                            </p>
+                          </div>
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              selectedAddress === address
+                                ? "border-brand-primary"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {selectedAddress === address && (
+                              <div className="w-3 h-3 rounded-full bg-brand-primary" />
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mb-1">{address.phone}</p>
-                          <p className="text-sm text-gray-700">
-                            {address.address}, {address.city}
-                            {address.state && `, ${address.state}`} - {address.postalCode}
-                          </p>
-                        </div>
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            selectedAddress === address
-                              ? "border-brand-primary"
-                              : "border-gray-300"
-                          }`}
-                        >
-                          {selectedAddress === address && (
-                            <div className="w-3 h-3 rounded-full bg-brand-primary" />
-                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setShowAddressModal(true)}
+                    className="mt-4 px-4 py-2 bg-brand-primary text-white rounded-lg text-sm font-medium hover:bg-brand-primary-dark"
+                  >
+                    + Add New Address
+                  </button>
+                </>
               )}
+                  {/* Address Modal */}
+                  {showAddressModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-xl font-semibold text-brand-primary">Add New Address</h3>
+                          <button
+                            onClick={() => setShowAddressModal(false)}
+                            className="text-gray-400 hover:bg-red-600 hover:text-brand-text-primary p-2 rounded-md transition-all"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <form onSubmit={handleAddAddress} className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                            <input
+                              name="name"
+                              value={addressForm.name}
+                              onChange={handleAddressChange}
+                              className="w-full rounded-xl border-2 border-brand-primary px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                            <input
+                              name="phone"
+                              value={addressForm.phone}
+                              onChange={handleAddressChange}
+                              className="w-full rounded-xl border-2 border-brand-primary px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Address *</label>
+                            <textarea
+                              name="address"
+                              value={addressForm.address}
+                              onChange={handleAddressChange}
+                              rows="2"
+                              className="w-full rounded-xl border-2 border-brand-primary px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                              required
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">City *</label>
+                              <input
+                                name="city"
+                                value={addressForm.city}
+                                onChange={handleAddressChange}
+                                className="w-full rounded-xl border-2 border-brand-primary px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
+                              <input
+                                name="state"
+                                value={addressForm.state}
+                                onChange={handleAddressChange}
+                                className="w-full rounded-xl border-2 border-brand-primary px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">Postal Code</label>
+                              <input
+                                name="postalCode"
+                                value={addressForm.postalCode}
+                                onChange={handleAddressChange}
+                                className="w-full rounded-xl border-2 border-brand-primary px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">Country</label>
+                              <input
+                                name="country"
+                                value={addressForm.country}
+                                onChange={handleAddressChange}
+                                className="w-full rounded-xl border-2 border-brand-primary px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              name="isDefault"
+                              checked={addressForm.isDefault}
+                              onChange={handleAddressChange}
+                              className="w-4 h-4 text-brand-primary rounded focus:ring-brand-primary"
+                            />
+                            <label className="text-sm text-gray-700">Set as default address</label>
+                          </div>
+                          <div className="flex gap-3 pt-4">
+                            <button
+                              type="button"
+                              onClick={() => setShowAddressModal(false)}
+                              className="flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={savingAddress}
+                              className="flex-1 px-4 py-2.5 bg-brand-primary text-brand-text-primary rounded-xl font-semibold hover:bg-brand-primary-dark disabled:opacity-60 transition-all"
+                            >
+                              {savingAddress ? "Saving..." : "Save Address"}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
             </div>
 
             {/* Payment Method */}

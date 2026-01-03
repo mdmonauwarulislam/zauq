@@ -9,7 +9,7 @@ import { RESPONSE_MESSAGES } from "../utils/constant.js";
  * @access  Private
  */
 export const getCart = asyncHandler(async (req, res) => {
-  const cart = await Cart.findOne({ user: req.user.id }).populate({
+  let cart = await Cart.findOne({ user: req.user.id }).populate({
     path: "items.product",
     select: "name slug images price discountedPrice stock",
   });
@@ -19,6 +19,26 @@ export const getCart = asyncHandler(async (req, res) => {
       success: true,
       message: RESPONSE_MESSAGES.SUCCESS,
       cart: { items: [], totalAmount: 0 },
+    });
+  }
+
+  // Filter out items with deleted products
+  const originalLength = cart.items.length;
+  cart.items = cart.items.filter(item => item.product); // populated product will be null if deleted
+
+  // Recalculate totalAmount
+  cart.totalAmount = cart.items.reduce(
+    (total, item) => total + (item.product.discountedPrice || item.product.price) * item.quantity,
+    0
+  );
+
+  // Save cart if any items were removed
+  if (cart.items.length !== originalLength) {
+    await cart.save();
+    // re-populate after save
+    cart = await Cart.findById(cart._id).populate({
+      path: "items.product",
+      select: "name slug images price discountedPrice stock",
     });
   }
 

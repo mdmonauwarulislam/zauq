@@ -14,7 +14,7 @@ const Category = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('newest');
-  const [showFilters, setShowFilters] = useState(false);
+  // const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchCategoryData();

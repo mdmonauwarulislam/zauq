@@ -381,7 +381,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const drawerRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items: cartItems, totalAmount } = useSelector((state) => state.cart);
+  const { items: cartItems, totalAmount, loading: cartLoading } = useSelector((state) => state.cart);
 
   const handleRemoveFromCart = (productId, e) => {
     e.stopPropagation();
@@ -431,7 +431,11 @@ const CartDrawer = ({ isOpen, onClose }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {cartItems.filter(item => item.product).length === 0 ? (
+          {cartLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+            </div>
+          ) : cartItems.filter(item => item.product).length === 0 ? (
             <p className="text-sm text-gray-600">Your cart is empty.</p>
           ) : (
             <div className="space-y-4">
@@ -477,7 +481,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {cartItems.filter(item => item.product).length > 0 && (
+        {!cartLoading && cartItems.filter(item => item.product).length > 0 && (
           <div className="border-t border-gray-200 p-4">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total: ₹{Math.round(totalAmount).toLocaleString()}</span>
