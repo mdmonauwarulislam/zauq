@@ -77,7 +77,7 @@ const Category = () => {
     );
   }
 
-  // Banner selection logic (only after category is loaded)
+  // Banner selection logic
   const bannerImage = isMobile
     ? (category.mobileBannerImage || category.desktopBannerImage)
     : (category.desktopBannerImage || category.mobileBannerImage);
