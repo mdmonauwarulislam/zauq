@@ -30,9 +30,13 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
   const [name, setName] = useState(initial.name || "");
   const [description, setDescription] = useState(initial.description || "");
   const [images, setImages] = useState(initial.images || []);
+  const [desktopBannerImage, setDesktopBannerImage] = useState(initial.desktopBannerImage || "");
+  const [mobileBannerImage, setMobileBannerImage] = useState(initial.mobileBannerImage || "");
   const [isFeatured, setIsFeatured] = useState(initial.isFeatured || false);
   const [displayOrder, setDisplayOrder] = useState(initial.displayOrder || 0);
   const [uploading, setUploading] = useState(false);
+  const [uploadingDesktopBanner, setUploadingDesktopBanner] = useState(false);
+  const [uploadingMobileBanner, setUploadingMobileBanner] = useState(false);
 
   const handleFile = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -69,9 +73,39 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDesktopBannerFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingDesktopBanner(true);
+    try {
+      const res = await CloudinaryService.uploadImage(file);
+      setDesktopBannerImage(res.secure_url || res.url);
+    } catch (err) {
+      alert("Desktop banner upload failed: " + (err.message || err));
+    } finally {
+      setUploadingDesktopBanner(false);
+    }
+  };
+
+  const handleMobileBannerFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingMobileBanner(true);
+    try {
+      const res = await CloudinaryService.uploadImage(file);
+      setMobileBannerImage(res.secure_url || res.url);
+    } catch (err) {
+      alert("Mobile banner upload failed: " + (err.message || err));
+    } finally {
+      setUploadingMobileBanner(false);
+    }
+  };
+
   const submit = (ev) => {
     ev.preventDefault();
-    onSubmit({ name, description, images, isFeatured, displayOrder });
+    onSubmit({ name, description, images, desktopBannerImage, mobileBannerImage, isFeatured, displayOrder });
   };
 
   return (
@@ -144,13 +178,13 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
           )}
         </div>
         {images.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-5 gap-3">
             {images.map((img, i) => (
-              <div key={i} className="relative group">
+              <div key={i} className="relative group z-0">
                 <img
                   src={img}
                   alt={`Category ${i + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border-2 border-gray-200 group-hover:border-orange-300 transition-all"
+                  className="w-full h-56 object-cover rounded-lg border-2 border-gray-200 group-hover:border-orange-300 transition-all"
                 />
                 <button
                   type="button"
@@ -161,6 +195,96 @@ const CategoryForm = ({ initial = {}, onSubmit, onCancel }) => {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Banner Image Section (moved up) */}
+      <div className="bg-green-50 rounded-xl p-5 border border-green-100">
+        <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <ImageIcon className="w-4 h-4 text-green-600" />
+          Mobile Banner Image (Optional)
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">This banner will be displayed on mobile devices in the Featured Collections section. Recommended size: 800x600px</p>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 px-4 py-3 bg-white border-2 border-dashed rounded-lg transition-all border-green-300 hover:border-green-400 hover:bg-green-50 cursor-pointer">
+            <Upload className="w-4 h-4 text-green-600" />
+            <span className="text-sm font-semibold text-gray-700">
+              {mobileBannerImage ? "Change Mobile Banner" : "Upload Mobile Banner"}
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleMobileBannerFile}
+              className="hidden"
+            />
+          </label>
+          {uploadingMobileBanner && (
+            <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-600 border-t-transparent"></div>
+              Uploading...
+            </div>
+          )}
+        </div>
+        {mobileBannerImage && (
+          <div className="mt-4 relative group z-0">
+            <img
+              src={mobileBannerImage}
+              alt="Mobile Banner"
+              className="w-full h-56 object-cover rounded-lg border-2 border-gray-200 group-hover:border-green-300 transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setMobileBannerImage("")}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Banner Image Section */}
+      <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
+        <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <ImageIcon className="w-4 h-4 text-blue-600" />
+          Desktop Banner Image (Optional)
+        </h3>
+        <p className="text-xs text-gray-500 mb-3">This banner will be displayed on laptops/desktops in the Featured Collections section. Recommended size: 1920x800px</p>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 px-4 py-3 bg-white border-2 border-dashed rounded-lg transition-all border-blue-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
+            <Upload className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-semibold text-gray-700">
+              {desktopBannerImage ? "Change Desktop Banner" : "Upload Desktop Banner"}
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleDesktopBannerFile}
+              className="hidden"
+            />
+          </label>
+          {uploadingDesktopBanner && (
+            <div className="flex items-center gap-2 text-sm text-blue-600 font-medium">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+              Uploading...
+            </div>
+          )}
+        </div>
+        {desktopBannerImage && (
+          <div className="mt-4 relative group z-0">
+            <img
+              src={desktopBannerImage}
+              alt="Desktop Banner"
+              className="w-full h-56 object-cover rounded-lg border-2 border-gray-200 group-hover:border-blue-300 transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setDesktopBannerImage("")}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
       </div>
@@ -350,7 +474,7 @@ const Categories = () => {
                   <img
                     src={selectedCategory.images[0]}
                     alt={selectedCategory.name}
-                    className="w-12 h-12 rounded-lg object-cover border-2 border-brand-primary"
+                    className="w-12 h-20 rounded-lg object-cover border-2 border-brand-primary"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-brand-primary/10 flex items-center justify-center">
@@ -609,7 +733,7 @@ const Categories = () => {
 
       {/* Categories Grid */}
       {!loading && filteredCategories.length > 0 && viewMode === "grid" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
           {filteredCategories.map((c) => (
             <div
               key={c._id}
@@ -656,12 +780,12 @@ const Categories = () => {
               </div>
 
               {/* Category Image */}
-              <div className="relative h-40 bg-gray-100 overflow-hidden">
+              <div className="relative h-80 bg-gray-100 overflow-hidden">
                 {c.images?.[0] ? (
                   <img
                     src={c.images[0]}
                     alt={c.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
@@ -802,9 +926,9 @@ const Categories = () => {
 
       {/* New Category Modal */}
       {showNew && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4 overflow-y-auto" style={{scrollbarWidth:'none'}}>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-99 p-4 overflow-y-auto" style={{scrollbarWidth:'none'}}>
           <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto" style={{scrollbarWidth:'none'}}>
-            <div className="sticky top-0 bg-blue-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl">
+            <div className="sticky top-0 bg-blue-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl z-10">
               <div className="flex items-center gap-3">
                 <div className="bg-blue-100 p-2 rounded-lg">
                   <Plus className="w-6 h-6 text-blue-600" />
@@ -834,7 +958,7 @@ const Categories = () => {
       {editing && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4 overflow-y-auto" style={{scrollbarWidth:'none'}}>
           <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto" style={{scrollbarWidth:'none'}}>
-            <div className="sticky top-0 bg-green-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl">
+            <div className="sticky top-0 bg-green-50 px-6 py-5 border-b border-gray-200 flex items-center justify-between rounded-t-2xl z-10">
               <div className="flex items-center gap-3">
                 <div className="bg-green-100 p-2 rounded-lg">
                   <Edit className="w-6 h-6 text-green-600" />

@@ -102,6 +102,13 @@ const apiUrls = {
     remove: (productId) => `wishlist/${productId}`,
     clear: "wishlist",
   },
+
+  // Recently Viewed
+  recentlyViewed: {
+    list: "recently-viewed",
+    add: (productId) => `recently-viewed/${productId}`,
+    clear: "recently-viewed",
+  },
 };
 
 export default apiUrls;

@@ -9,8 +9,8 @@ import { RESPONSE_MESSAGES } from "../utils/constant.js";
  */
 export const getHomepageConfig = asyncHandler(async (req, res) => {
   let config = await HomepageConfig.findOne()
-    .populate("featuredCategories", "name slug images isFeatured")
-    .populate("mainCategories", "name slug images isFeatured")
+    .populate("featuredCategories", "name slug images desktopBannerImage mobileBannerImage isFeatured")
+    .populate("mainCategories", "name slug images desktopBannerImage mobileBannerImage isFeatured")
     .populate("latestProducts", "name slug images discountedPrice price isLatest")
     .populate({
       path: "featuredReviews",
@@ -135,8 +135,8 @@ export const updateHomepageConfig = asyncHandler(async (req, res) => {
   await config.save();
 
   const populatedConfig = await HomepageConfig.findById(config._id)
-    .populate("featuredCategories", "name slug images isFeatured")
-    .populate("mainCategories", "name slug images isFeatured")
+    .populate("featuredCategories", "name slug images desktopBannerImage mobileBannerImage isFeatured")
+    .populate("mainCategories", "name slug images desktopBannerImage mobileBannerImage isFeatured")
     .populate("latestProducts", "name slug images discountedPrice price isLatest")
     .populate({
       path: "featuredReviews",

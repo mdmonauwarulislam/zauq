@@ -6,10 +6,7 @@ const { Schema, model } = mongoose;
 const heroSchema = new Schema(
   {
     image: { type: String, default: null },
-    title: { type: String, trim: true },
-    subtitle: { type: String, trim: true },
-    ctaText: { type: String, trim: true },
-    ctaLink: { type: String, trim: true },
+    ctaLink: { type: String, trim: true},
   },
   { _id: false }
 );

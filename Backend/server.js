@@ -20,6 +20,7 @@ import homepageRoutes from "./routes/homepage.js";
 import adminRoutes from "./routes/admin.js";
 import wishlistRoutes from "./routes/wishlist.js";
 import cartRoutes from "./routes/cart.js";
+import recentlyViewedRoutes from "./routes/recentlyViewed.js";
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ app.use("/api/homepage", homepageRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/recently-viewed", recentlyViewedRoutes);
 
 app.use(errorMiddleware);
 

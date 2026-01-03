@@ -41,6 +41,8 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.loading = false;
       localStorage.removeItem(TOKEN_KEY);
+      // Clear old localStorage recent views data
+      localStorage.removeItem("recent_views_v1");
     },
   },
 });

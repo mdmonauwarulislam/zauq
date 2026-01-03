@@ -70,7 +70,7 @@ const CollectionsCategory = memo(({ collection }) => {
   return (
     <div className="flex justify-center items-center">
       <div
-        className="group relative w-full h-[200px] sm:h-[300px] md:h-[360px] lg:h-[400px] bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer"
+        className="group relative w-full h-[220px] sm:h-[350px] md:h-[420px] lg:h-[480px] bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleNavigate}

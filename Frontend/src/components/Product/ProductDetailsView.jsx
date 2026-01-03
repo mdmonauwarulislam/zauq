@@ -184,11 +184,11 @@ const ProductDetailsView = ({
 
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Product Details Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">
           {/* Images */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:col-span-2">
             {/* Main Image */}
-            <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-lg">
+            <div className={`relative bg-white rounded-2xl overflow-hidden shadow-lg ${isAdmin ? 'aspect-[3/4]' : 'h-[79vh]'}`}>
               <img
                 src={product.images?.[selectedImage] || 'https://placehold.co/600x600'}
                 alt={product.name}
@@ -260,7 +260,7 @@ const ProductDetailsView = ({
           </div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:col-span-3">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                 {product.name}
@@ -315,22 +315,24 @@ const ProductDetailsView = ({
               )}
             </div>
 
-            {/* Stock Status */}
-            <div className="flex items-center gap-2">
-              {product.stock > 0 ? (
-                <>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-green-700 font-medium">
-                    In Stock ({product.stock} available)
-                  </span>
-                </>
-              ) : (
-                <>
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-red-700 font-medium">Out of Stock</span>
-                </>
-              )}
-            </div>
+            {/* Stock Status - Admin Only */}
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                {product.stock > 0 ? (
+                  <>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-green-700 font-medium">
+                      In Stock ({product.stock} available)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span className="text-red-700 font-medium">Out of Stock</span>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Admin Stats Section */}
             {isAdmin && (
@@ -458,10 +460,15 @@ const ProductDetailsView = ({
 
           {/* Description Tab */}
           {activeTab === 'description' && (
-            <div className="prose max-w-none">
-              <p className="text-gray-700 whitespace-pre-line">
-                {product.description || 'No description available.'}
-              </p>
+            <div className="prose prose-lg max-w-none">
+              {product.description ? (
+                <div 
+                  className="text-gray-700 product-description"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              ) : (
+                <p className="text-gray-500 italic">No description available.</p>
+              )}
               {product.tags && product.tags.length > 0 && (
                 <div className="mt-6">
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">

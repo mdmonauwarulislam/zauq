@@ -10,9 +10,9 @@ const ViewAllCard = memo(({ to = '/categories' }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex justify-center items-center">
+    <div className="flex justify-center items-center h-full">
       <div
-        className="group relative w-full h-[200px] sm:h-[300px] md:h-[360px] lg:h-[400px] bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer border-2 border-dashed border-gray-300"
+        className="group relative w-full h-[220px] sm:h-[350px] md:h-[420px] lg:h-[480px] bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer border-2 border-dashed border-gray-300"
         onClick={() => navigate(to)}
       >
         {/* Content */}

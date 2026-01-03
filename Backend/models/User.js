@@ -61,6 +61,16 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    recentlyViewed: [{
+      product: {
+        type: Schema.Types.ObjectId,
+        ref: 'Product'
+      },
+      viewedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
   },
   {
     timestamps: true,

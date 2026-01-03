@@ -176,37 +176,23 @@ const HeroSlider = ({ heroes = [] }) => {
   }, [heroes, isPaused, heroes.length]);
 
   if (!heroes || heroes.length === 0) {
-    return (
-      <section className="relative h-[35vh] sm:h-[60vh] md:h-[80vh] lg:h-[80vh] overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-purple-50 via-white to-blue-50">
-          <div className="absolute inset-0 flex flex-col justify-center items-start max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
-            <div className="max-w-3xl">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-3 sm:mb-6 leading-tight bg-linear-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                ZAUQ
-              </h1>
-              <p className="text-sm sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-10 text-white font-light max-w-2xl">
-                Welcome to our store - Discover the latest trends
-              </p>
-              <Link to="/products">
-                <button className="group rounded-full px-6 sm:px-10 py-2.5 sm:py-4 bg-transparent text-black text-xs sm:text-base font-semibold border-2 border-black hover:bg-black hover:text-white transition-all duration-300 inline-flex items-center gap-2 sm:gap-3">
-                  Shop Now
-                  <FaLongArrowAltRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-1" />
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   const currentHero = heroes[index];
 
+  const handleBannerClick = () => {
+    if (currentHero?.ctaLink) {
+      window.location.href = currentHero.ctaLink;
+    }
+  };
+
   return (
     <section 
-      className="relative h-[35vh] sm:h-[60vh] md:h-[80vh] lg:h-[80vh] overflow-hidden group"
+      className="relative h-[25vh] sm:h-[60vh] md:h-[80vh] lg:h-[80vh] overflow-hidden group cursor-pointer"
       onMouseEnter={() => setIsPaused(true)} 
       onMouseLeave={() => setIsPaused(false)}
+      onClick={handleBannerClick}
     >
       {/* Background Image Slider with Smooth Transition */}
       <div className="absolute inset-0">
@@ -220,7 +206,7 @@ const HeroSlider = ({ heroes = [] }) => {
             }`}
             style={{
               backgroundImage: hero?.image 
-                ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.4)), url(${hero.image})` 
+                ? `url(${hero.image})` 
                 : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
@@ -229,61 +215,22 @@ const HeroSlider = ({ heroes = [] }) => {
         ))}
       </div>
 
-      {/* Overlay Gradient */}
-      <div className="absolute inset-0 bg-linear-to-r from-black/50 via-transparent to-transparent" />
-
-      {/* Content */}
-      <div className="relative h-full flex flex-col justify-center items-start max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
-        <div className="max-w-3xl">
-          <h1 
-            className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-3 sm:mb-6 leading-tight text-white drop-shadow-lg transition-all duration-700 ${
-              isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-            }`}
-          >
-            {currentHero?.title || 'ZAUQ'}
-          </h1>
-          
-          {currentHero?.subtitle && (
-            <p 
-              className={`text-sm sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-10 text-white font-light max-w-2xl drop-shadow-md transition-all duration-700 delay-100 ${
-                isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-              }`}
-            >
-              {currentHero.subtitle}
-            </p>
-          )}
-          
-          <div 
-            className={`transition-all duration-700 delay-200 ${
-              isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-            }`}
-          >
-            <Link to={currentHero?.ctaLink || '/products'}>
-              <button className="group rounded-full px-6 sm:px-10 py-2.5 sm:py-4 bg-transparent text-white text-xs sm:text-base font-semibold border-2 border-white hover:bg-white hover:text-black transition-all duration-300 inline-flex items-center gap-2 sm:gap-3">
-                {currentHero?.ctaText || 'Shop Now'}
-                <FaLongArrowAltRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-1" />
-              </button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Navigation Arrows - Visible on hover */}
       {heroes.length > 1 && (
         <>
           <button
-            onClick={handlePrev}
+            onClick={(e) => { e.stopPropagation(); handlePrev(); }}
             disabled={isTransitioning}
-            className="absolute left-4 sm:left-6 lg:left-8 top-1/2 -translate-y-1/2 p-2 sm:p-3 lg:p-4 bg-white/20 backdrop-blur-md rounded-full shadow-lg hover:bg-white/40 transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="absolute left-4 sm:left-6 lg:left-8 top-1/2 -translate-y-1/2 p-2 sm:p-3 lg:p-4 bg-white/20 backdrop-blur-md rounded-full shadow-lg hover:bg-white/40 transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed z-10"
             aria-label="Previous slide"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
           </button>
           
           <button
-            onClick={handleNext}
+            onClick={(e) => { e.stopPropagation(); handleNext(); }}
             disabled={isTransitioning}
-            className="absolute right-4 sm:right-6 lg:right-8 top-1/2 -translate-y-1/2 p-2 sm:p-3 lg:p-4 bg-white/20 backdrop-blur-md rounded-full shadow-lg hover:bg-white/40 transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="absolute right-4 sm:right-6 lg:right-8 top-1/2 -translate-y-1/2 p-2 sm:p-3 lg:p-4 bg-white/20 backdrop-blur-md rounded-full shadow-lg hover:bg-white/40 transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed z-10"
             aria-label="Next slide"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
@@ -293,11 +240,11 @@ const HeroSlider = ({ heroes = [] }) => {
 
       {/* Pagination Dots */}
       {heroes.length > 1 && (
-        <div className="absolute bottom-4 sm:bottom-8 lg:bottom-10 left-1/2 transform -translate-x-1/2 flex gap-1.5 sm:gap-3 bg-black/20 backdrop-blur-sm px-3 py-1.5 sm:px-6 sm:py-3 rounded-full">
+        <div className="absolute bottom-4 sm:bottom-8 lg:bottom-10 left-1/2 transform -translate-x-1/2 flex gap-1.5 sm:gap-3 bg-black/20 backdrop-blur-sm px-3 py-1.5 sm:px-6 sm:py-3 rounded-full z-10">
           {heroes.map((_, i) => (
             <button
               key={i}
-              onClick={() => handleDotClick(i)}
+              onClick={(e) => { e.stopPropagation(); handleDotClick(i); }}
               disabled={isTransitioning}
               className={`h-1.5 sm:h-2.5 rounded-full transition-all duration-300 disabled:cursor-not-allowed ${
                 i === index 
@@ -404,14 +351,16 @@ const Home = () => {
       <HeroSlider heroes={hero} />
 
       {featuredCollections.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-12 sm:py-16">
-          <h2 className="text-xl sm:text-2xl font-light text-brand-primary tracking-tight mb-6 sm:mb-8 uppercase text-center">Featured Collections</h2>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-            {featuredCollections.map((c) => (
-              <div key={c._id} className="aspect-5/3">
-                <FeaturedCard collection={c} />
-              </div>
-            ))}
+        <section className="w-full py-12 sm:py-16">
+          <h2 className="text-xl sm:text-2xl font-light text-brand-primary tracking-tight mb-6 sm:mb-8 uppercase text-center max-w-7xl mx-auto px-4">Featured Collections</h2>
+          
+          {/* All featured collections - full width, 1 per row */}
+          <div className="w-full px-4 lg:px-8">
+            <div className="grid grid-cols-1 gap-4 lg:gap-6">
+              {featuredCollections.map((c) => (
+                <FeaturedCard key={c._id} collection={c} isBanner={!!c.bannerImage} />
+              ))}
+            </div>
           </div>
         </section>
       )}

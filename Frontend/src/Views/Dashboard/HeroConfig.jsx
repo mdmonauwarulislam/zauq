@@ -37,7 +37,7 @@ const HeroConfig = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
   const [activeTab, setActiveTab] = useState('hero');
 
-  const [heroes, setHeroes] = useState([{ title: "", subtitle: "", ctaText: "", ctaLink: "", image: "" }]);
+  const [heroes, setHeroes] = useState([{ image: "", ctaLink: "" }]);
   const [featuredCollections, setFeaturedCollections] = useState([]);
   const [mainCategories, setMainCategories] = useState([]);
   const [latestProducts, setLatestProducts] = useState([]); 
@@ -113,7 +113,7 @@ const HeroConfig = () => {
 
       // map homepage fields
       const h = cfg.heroSection || [];
-      setHeroes(h.length > 0 ? h : [{ title: "", subtitle: "", ctaText: "", ctaLink: "", image: "" }]);
+      setHeroes(h.length > 0 ? h : [{ image: "", ctaLink: "" }]);
 
       setFeaturedCollections((cfg.featuredCategories || []).map((c) => c._id || c));
       setMainCategories((cfg.mainCategories || []).map((c) => c._id || c).slice(0, 7));
@@ -157,7 +157,7 @@ const HeroConfig = () => {
   };
 
   const addHero = () => {
-    setHeroes((prev) => [...prev, { title: "", subtitle: "", ctaText: "", ctaLink: "", image: "" }]);
+    setHeroes((prev) => [...prev, { image: "", ctaLink: "" }]);
   };
 
   const removeHero = (index) => {
@@ -416,75 +416,22 @@ const HeroConfig = () => {
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
-                        {heroes.length > 1 && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => removeHero(index)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeHero(index)}
+                          className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                      <div className="lg:col-span-2 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                              Title
-                            </label>
-                            <input
-                              value={hero.title}
-                              onChange={(e) => updateHero(index, "title", e.target.value)}
-                              placeholder="Enter slide title"
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                              Subtitle
-                            </label>
-                            <input
-                              value={hero.subtitle}
-                              onChange={(e) => updateHero(index, "subtitle", e.target.value)}
-                              placeholder="Enter slide subtitle"
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                              Button Text
-                            </label>
-                            <input
-                              value={hero.ctaText}
-                              onChange={(e) => updateHero(index, "ctaText", e.target.value)}
-                              placeholder="Shop Now"
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                              Button Link
-                            </label>
-                            <input
-                              value={hero.ctaLink}
-                              onChange={(e) => updateHero(index, "ctaLink", e.target.value)}
-                              placeholder="/products"
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
+                      <div className="lg:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                           Hero Image
                         </label>
-                        <div className="border-2 border-dashed border-purple-300 rounded-xl hover:border-purple-500 bg-white transition-all h-[140px]">
+                        <div className="border-2 border-dashed border-purple-300 rounded-xl hover:border-purple-500 bg-white transition-all h-[200px]">
                           {hero.image ? (
                             <div className="relative h-full">
                               <img
@@ -509,7 +456,6 @@ const HeroConfig = () => {
                             <label className="flex flex-col items-center justify-center h-full cursor-pointer">
                               <Upload className="w-8 h-8 text-gray-400 mb-2" />
                               <span className="text-sm text-gray-500">Upload image</span>
-                              <span className="text-xs text-gray-400 mt-1">1920x800px recommended</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -520,6 +466,19 @@ const HeroConfig = () => {
                             </label>
                           )}
                         </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Click Link (URL)
+                        </label>
+                        <input
+                          value={hero.ctaLink}
+                          onChange={(e) => updateHero(index, "ctaLink", e.target.value)}
+                          placeholder="/products or /categories/sale"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                        />
+                        <p className="text-xs text-gray-500 mt-2">Where users navigate when clicking the banner</p>
                       </div>
                     </div>
                   </div>
@@ -535,6 +494,7 @@ const HeroConfig = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Featured Collections</h3>
                   <p className="text-sm text-gray-500 mt-1">Select up to 4 categories to feature on homepage ({featuredCollections.length}/4)</p>
+                  <p className="text-xs text-blue-600 mt-1">ℹ️ Only categories with both desktop and mobile banner images are shown</p>
                 </div>
                 {featuredCollections.length > 0 && (
                   <Button
@@ -597,7 +557,7 @@ const HeroConfig = () => {
                   {dropdownOpen.featuredCollections && (
                     <div className="absolute z-50 w-full bottom-full mb-2 bg-white border-2 border-blue-400 rounded-lg shadow-2xl max-h-80 overflow-y-auto">
                       {allCategories
-                        .filter((c) => !featuredCollections.includes(c._id || c))
+                        .filter((c) => !featuredCollections.includes(c._id || c) && c.desktopBannerImage && c.mobileBannerImage)
                         .map((c) => {
                           const id = c._id || c;
                           return (
@@ -610,20 +570,20 @@ const HeroConfig = () => {
                               }}
                             >
                               <img
-                                src={c.images?.[0] || "/placeholder.png"}
+                                src={c.desktopBannerImage || c.images?.[0] || "/placeholder.png"}
                                 alt={c.name}
                                 className="w-12 h-12 object-cover rounded-lg"
                               />
                               <div className="flex-1">
                                 <p className="font-medium text-gray-900">{c.name}</p>
-                                <p className="text-xs text-gray-500">Category</p>
+                                <p className="text-xs text-gray-500">Has desktop & mobile banners</p>
                               </div>
                               <Plus className="w-5 h-5 text-blue-500" />
                             </div>
                           );
                         })}
-                      {allCategories.filter((c) => !featuredCollections.includes(c._id || c)).length === 0 && (
-                        <p className="p-4 text-center text-gray-500">No more categories available</p>
+                      {allCategories.filter((c) => !featuredCollections.includes(c._id || c) && c.desktopBannerImage && c.mobileBannerImage).length === 0 && (
+                        <p className="p-4 text-center text-gray-500">No categories with both banner images available</p>
                       )}
                     </div>
                   )}

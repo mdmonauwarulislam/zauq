@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import ProductService from '@/services/productService';
 import CloudinaryService from '@/services/cloudinaryService';
 import CategoryService from '@/services/categoryService';
@@ -116,13 +118,42 @@ const ProductForm = ({ initial = {}, onSubmit, onCancel }) => {
 
         <div className="mt-4">
           <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter product description"
-            rows="3"
-            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-          />
+          <div className="bg-white rounded-lg border-2 border-gray-200 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+            <ReactQuill
+              theme="snow"
+              value={description}
+              onChange={setDescription}
+              placeholder="Enter product description with formatting..."
+              modules={{
+                toolbar: [
+                  [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                  [{ 'font': [] }],
+                  [{ 'size': ['small', false, 'large', 'huge'] }],
+                  ['bold', 'italic', 'underline', 'strike'],
+                  [{ 'color': [] }, { 'background': [] }],
+                  [{ 'script': 'sub' }, { 'script': 'super' }],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                  [{ 'indent': '-1' }, { 'indent': '+1' }],
+                  [{ 'direction': 'rtl' }],
+                  [{ 'align': [] }],
+                  ['blockquote', 'code-block'],
+                  ['link', 'image', 'video'],
+                  ['clean']
+                ],
+              }}
+              formats={[
+                'header', 'font', 'size',
+                'bold', 'italic', 'underline', 'strike',
+                'color', 'background',
+                'script',
+                'list', 'indent', 'direction', 'align',
+                'blockquote', 'code-block',
+                'link', 'image', 'video'
+              ]}
+              className="[&_.ql-container]:min-h-[200px] [&_.ql-editor]:min-h-[200px]"
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Use the toolbar to format text, add tables, images, links and more</p>
         </div>
       </div>
 
@@ -249,7 +280,7 @@ const ProductForm = ({ initial = {}, onSubmit, onCancel }) => {
                 <img
                   src={img}
                   alt={`Product ${i + 1}`}
-                  className="w-full h-24 object-cover rounded-lg border-2 border-gray-200 group-hover:border-orange-300 transition-all"
+                  className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 group-hover:border-orange-300 transition-all"
                 />
                 <button
                   type="button"
@@ -461,7 +492,7 @@ const Products = () => {
 
       {/* Products Grid View */}
       {!loading && filteredProducts.length > 0 && viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
           {filteredProducts.map((p) => (
             <div
               key={p._id}
@@ -516,12 +547,12 @@ const Products = () => {
               </div>
 
               {/* Product Image */}
-              <div className="relative h-72 bg-gray-100 overflow-hidden">
+              <div className="relative h-84 bg-gray-100 overflow-hidden">
                 {p.images?.[0] ? (
                   <img
                     src={p.images[0]}
                     alt={p.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-300"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">

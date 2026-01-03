@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import ProductService from '@/services/productService';
+import RecentlyViewedService from '@/services/recentlyViewedService';
 import ProductCard from '@/components/Home/ProductCard';
 import ProductDetailsView from '@/components/Product/ProductDetailsView';
-import { pushRecentView, getRecentViews } from '@/lib/recentViews';
 import toast from 'react-hot-toast';
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -24,7 +26,15 @@ const ProductDetails = () => {
         
         if (productData) {
           setProduct(productData);
-          pushRecentView(productData);
+          
+          // Add to recently viewed only for authenticated users
+          if (isAuthenticated) {
+            try {
+              await RecentlyViewedService.addRecentlyViewed(productData._id);
+            } catch (err) {
+              console.log('Failed to add to recently viewed:', err);
+            }
+          }
           
           // Fetch reviews
           if (productData.reviews && productData.reviews.length > 0) {
@@ -49,16 +59,29 @@ const ProductDetails = () => {
       }
     };
 
-    const loadRecentlyViewed = () => {
-      const recent = getRecentViews().filter(p => p._id !== id).slice(0, 8);
-      setRecentProducts(recent);
+    const loadRecentlyViewed = async () => {
+      if (!isAuthenticated) {
+        setRecentProducts([]);
+        return;
+      }
+      
+      try {
+        const res = await RecentlyViewedService.getRecentlyViewed();
+        const products = res?.data?.products || [];
+        // Filter out current product
+        const filtered = products.filter(p => p._id !== id);
+        setRecentProducts(filtered);
+      } catch (err) {
+        console.log('Failed to load recently viewed:', err);
+        setRecentProducts([]);
+      }
     };
 
     if (id) {
       fetchProductDetails();
       loadRecentlyViewed();
     }
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   return (
     <div>
@@ -73,8 +96,8 @@ const ProductDetails = () => {
         ProductCardComponent={ProductCard}
       />
       
-      {/* Recently Viewed Section - Kept separate as it's unique to user view */}
-      {!loading && recentProducts.length > 0 && (
+      {/* Recently Viewed Section - Only for authenticated users */}
+      {!loading && isAuthenticated && recentProducts.length > 0 && (
         <div className="w-full px-4 sm:px-6 lg:px-8 pb-8 bg-brand-text-primary">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Recently Viewed</h2>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">

@@ -63,6 +63,11 @@ const wishlistSlice = createSlice({
     clearWishlistError: (state) => {
       state.error = null;
     },
+    resetWishlist: (state) => {
+      state.items = [];
+      state.loading = false;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -117,5 +122,5 @@ const wishlistSlice = createSlice({
   },
 });
 
-export const { clearWishlistError } = wishlistSlice.actions;
+export const { clearWishlistError, resetWishlist } = wishlistSlice.actions;
 export default wishlistSlice.reducer;

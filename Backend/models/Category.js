@@ -40,6 +40,16 @@ const categorySchema = new Schema(
       default: 0,
     },
 
+    desktopBannerImage: {
+      type: String,
+      default: "",
+    },
+
+    mobileBannerImage: {
+      type: String,
+      default: "",
+    },
+
     itemCount: {
       type: Number,
       default: 0,

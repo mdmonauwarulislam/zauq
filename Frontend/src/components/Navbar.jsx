@@ -21,8 +21,8 @@ import MarqueeBar from "./MarqueeBar";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/redux/slices/authSlice";
 import { selectNavbarItems, selectMarqueeMessages, selectSaleBanner, fetchHomepageConfig } from "@/redux/slices/homepageSlice";
-import { fetchWishlist, removeFromWishlist } from "@/redux/slices/wishlistSlice";
-import { fetchCart, removeFromCart, updateCartItem } from "@/redux/slices/cartSlice";
+import { fetchWishlist, removeFromWishlist, resetWishlist } from "@/redux/slices/wishlistSlice";
+import { fetchCart, removeFromCart, updateCartItem, resetCart } from "@/redux/slices/cartSlice";
 import HomepageService from "@/services/homepageService";
 
 // --- Configuration Data ---
@@ -420,7 +420,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
       >
         <div className="flex items-center justify-between px-4 py-4 border-b-3 border-brand-primary">
           <h2 className="text-sm font-semibold tracking-wide text-gray-800 uppercase">
-            Cart ({cartItems.length})
+            Cart ({cartItems.filter(item => item.product).length})
           </h2>
           <button
             onClick={onClose}
@@ -431,11 +431,11 @@ const CartDrawer = ({ isOpen, onClose }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {cartItems.length === 0 ? (
+          {cartItems.filter(item => item.product).length === 0 ? (
             <p className="text-sm text-gray-600">Your cart is empty.</p>
           ) : (
             <div className="space-y-4">
-              {cartItems.map((item) => (
+              {cartItems.filter(item => item.product).map((item) => (
                 <div 
                   key={item.product._id} 
                   onClick={() => handleProductClick(item.product._id)}
@@ -477,7 +477,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {cartItems.length > 0 && (
+        {cartItems.filter(item => item.product).length > 0 && (
           <div className="border-t border-gray-200 p-4">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total: ₹{Math.round(totalAmount).toLocaleString()}</span>
@@ -533,7 +533,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
       >
         <div className="flex items-center justify-between px-4 py-4 border-b-3 border-brand-primary">
           <h2 className="text-sm font-semibold tracking-wide text-gray-800 uppercase">
-            Wishlist ({wishlistItems.length})
+            Wishlist ({wishlistItems.filter(item => item.product).length})
           </h2>
           <button
             onClick={onClose}
@@ -544,11 +544,11 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {wishlistItems.length === 0 ? (
+          {wishlistItems.filter(item => item.product).length === 0 ? (
             <p className="text-sm text-gray-600">Your wishlist is empty.</p>
           ) : (
             <div className="space-y-4">
-              {wishlistItems.map((item) => (
+              {wishlistItems.filter(item => item.product).map((item) => (
                 <div 
                   key={item.product._id} 
                   onClick={() => handleProductClick(item.product._id)}
@@ -755,6 +755,8 @@ const Navbar = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(resetCart());
+    dispatch(resetWishlist());
     toast.success("Logged out successfully");
     navigate("/");
   };
@@ -928,7 +930,7 @@ const Navbar = () => {
               >
                 <Star className="w-6 h-6" />
                 <span className="absolute top-0 right-0 p-2 h-4 w-4 text-xs bg-red-600 text-white rounded-full flex items-center justify-center font-bold border-2 border-white">
-                  {wishlistItems.length}
+                  {wishlistItems.filter(item => item.product).length}
                 </span>
               </button>
 
@@ -939,7 +941,7 @@ const Navbar = () => {
               >
                 <ShoppingBag className="w-6 h-6" />
                 <span className="absolute top-0 right-0 p-2 h-4 w-4 text-xs bg-red-600 text-white rounded-full flex items-center justify-center font-bold border-2 border-white">
-                  {cartItems.length}
+                  {cartItems.filter(item => item.product).length}
                 </span>
               </button>
 

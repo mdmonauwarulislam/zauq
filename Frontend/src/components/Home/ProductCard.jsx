@@ -1,10 +1,11 @@
-import { EyeIcon, Heart, HeartPlus, Plus } from 'lucide-react';
+import { EyeIcon, Heart, HeartPlus, Plus, ShoppingCart } from 'lucide-react';
 import { memo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { pushRecentView as pushRecentViewUtil } from '@/lib/recentViews';
 import { addToCart } from '@/redux/slices/cartSlice';
 import { addToWishlist, removeFromWishlist } from '@/redux/slices/wishlistSlice';
+import toast from 'react-hot-toast';
 
 /**
  * ProductCard Component
@@ -13,10 +14,12 @@ import { addToWishlist, removeFromWishlist } from '@/redux/slices/wishlistSlice'
  */
 const ProductCard = memo(({ product }) => {
   const [cartQuantity, setCartQuantity] = useState(0);
+  const [showGoToCart, setShowGoToCart] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartItems = useSelector((state) => state.cart?.items || []);
   const wishlistItems = useSelector((state) => state.wishlist?.items || []);
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   // Safe prop validation
   if (!product || !product._id) {
@@ -42,6 +45,19 @@ const ProductCard = memo(({ product }) => {
     setCartQuantity(cartItem?.quantity || 0);
   }, [cartItems, _id]);
 
+  // Reset showGoToCart after 60 seconds
+  useEffect(() => {
+    let timer;
+    if (showGoToCart) {
+      timer = setTimeout(() => {
+        setShowGoToCart(false);
+      }, 60000); // 60 seconds
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showGoToCart]);
+
   const imageUrl = images?.[0] || 'https://placehold.co/400x550';
   
   // Show discounted price as main price if available, otherwise show regular price
@@ -65,7 +81,6 @@ const ProductCard = memo(({ product }) => {
   const handleAddToCart = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('Add to cart clicked for:', name);
     
     const cartItem = {
       _id,
@@ -77,14 +92,27 @@ const ProductCard = memo(({ product }) => {
       quantity: 1
     };
     
-    console.log('Cart item:', cartItem);
-    
     try {
       dispatch(addToCart(cartItem));
-      console.log('Dispatched addToCart');
+      toast.success(`${name} added to cart!`, {
+        duration: 3000,
+        position: 'bottom-center',
+      });
+      
+      // Show "Go to Cart" button for 60 seconds for authenticated users
+      if (isAuthenticated) {
+        setShowGoToCart(true);
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      toast.error('Failed to add to cart');
     }
+  };
+
+  const handleGoToCart = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate('/cart');
   };
 
   const handleWishlistToggle = async (e) => {
@@ -107,7 +135,7 @@ const ProductCard = memo(({ product }) => {
   return (
     <div className="flex justify-center items-center">
       <div 
-        className="w-full h-[200px] sm:h-[300px] md:h-[360px] lg:h-[400px] bg-white border-b-2 border-gray-200 rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg overflow-hidden transition-shadow duration-300 hover:shadow-xl flex flex-col cursor-pointer"
+        className="w-full h-[220px] sm:h-[350px] md:h-[420px] lg:h-[480px] bg-white border-b-2 border-gray-200 rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg overflow-hidden transition-shadow duration-300 hover:shadow-xl flex flex-col cursor-pointer"
         onClick={handleProductClick}
       >
         <div className="relative flex-1 overflow-hidden bg-gray-100">
@@ -160,17 +188,28 @@ const ProductCard = memo(({ product }) => {
             </div>
           </div>
 
-          <button
-            onClick={handleAddToCart}
-            className="relative flex items-center justify-center p-1.5 sm:p-2 md:p-2.5 border-2 border-gray-900 text-gray-900 bg-white rounded-lg hover:bg-gray-100  transition-all duration-300shrink-0 min-w-8 sm:min-w-[38px] md:min-w-11 min-h-8 sm:min-h-[38px] md:min-h-11"
-            aria-label="Add to Cart"
-          >
-            {cartQuantity > 0 ? (
-              <span className="text-xs sm:text-sm md:text-base font-bold">{cartQuantity}</span>
-            ) : (
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" strokeWidth={2.5} />
-            )}
-          </button>
+          {showGoToCart && isAuthenticated ? (
+            <button
+              onClick={handleGoToCart}
+              className="relative flex items-center justify-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 shrink-0 text-xs sm:text-sm font-semibold"
+              aria-label="Go to Cart"
+            >
+              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Go to Cart</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              className="relative flex items-center justify-center p-1.5 sm:p-2 md:p-2.5 border-2 border-gray-900 text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-all duration-300 shrink-0 min-w-8 sm:min-w-[38px] md:min-w-11 min-h-8 sm:min-h-[38px] md:min-h-11"
+              aria-label="Add to Cart"
+            >
+              {cartQuantity > 0 ? (
+                <span className="text-xs sm:text-sm md:text-base font-bold">{cartQuantity}</span>
+              ) : (
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" strokeWidth={2.5} />
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
