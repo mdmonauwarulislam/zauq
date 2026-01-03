@@ -35,7 +35,7 @@ const FeaturedCard = memo(({ collection, isBanner = false }) => {
     ? (mobileBannerImage || desktopBannerImage || images?.[0] || "https://placehold.co/800x500/f0f0f0/999999?text=Featured+Collection")
     : (desktopBannerImage || mobileBannerImage || images?.[0] || "https://placehold.co/800x500/f0f0f0/999999?text=Featured+Collection");
   
-  const navigationLink = link || `/categories/${slug || _id}`;
+  const navigationLink = link || `/category/${_id}`;
 
   const handleNavigate = () => {
     navigate(navigationLink);
@@ -62,7 +62,7 @@ const FeaturedCard = memo(({ collection, isBanner = false }) => {
           />
 
           {/* Hover Overlay with name */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="absolute bottom-0 left-0 right-0 p-6">
               <h3 className="text-white text-xl md:text-2xl lg:text-3xl font-semibold">{name}</h3>
             </div>

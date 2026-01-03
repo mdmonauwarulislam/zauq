@@ -46,6 +46,15 @@ const Category = () => {
     { value: 'name-asc', label: 'Name: A to Z' },
   ];
 
+  // Device detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -68,18 +77,33 @@ const Category = () => {
     );
   }
 
+  // Banner selection logic (only after category is loaded)
+  const bannerImage = isMobile
+    ? (category.mobileBannerImage || category.desktopBannerImage)
+    : (category.desktopBannerImage || category.mobileBannerImage);
+  const fallbackImage = category.images?.[0] || null;
+
   return (
     <div className="min-h-screen bg-brand-text-primary">
       {/* Hero Section */}
-      <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
-        <img
-          src={category.images?.[0] || 'https://placehold.co/1920x600/f0f0f0/333333?text=Category'}
-          alt={category.name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.src = 'https://placehold.co/1920x600/f0f0f0/333333?text=Category';
-          }}
-        />
+      <div className="relative h-[30vh] md:h-[50vh] overflow-hidden">
+        {bannerImage ? (
+          <img
+            src={bannerImage}
+            alt={category.name}
+            className="w-full h-full object-cover"
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+        ) : fallbackImage ? (
+          <img
+            src={fallbackImage}
+            alt={category.name}
+            className="w-full h-full object-cover"
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+        ) : (
+          <div className="w-full h-full bg-brand-primary" />
+        )}
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
         
         {/* Back Button */}

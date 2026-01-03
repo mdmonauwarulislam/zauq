@@ -482,7 +482,7 @@ const Product = () => {
         <aside className="hidden lg:block w-72 shrink-0">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 sticky top-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
             {/* Filter Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gradient-to-r from-brand-primary/5 to-transparent">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-brand-primary/5 to-transparent">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center">
                   <SlidersHorizontal className="w-4 h-4 text-brand-primary" />
